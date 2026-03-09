@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Intini Journaling | Professional Suite</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bg_main: '#050505',
+                        up: '#10b981',
+                        down: '#ef4444',
+                        text_main: '#ffffff',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { 
+            background-color: #050505;
+            color: #e5e5e5;
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- STILE NEON BIANCO DIFFUSO (HOMEPAGE) --- */
+        .neon-white-3d {
+            background: rgba(0, 0, 0, 0.65); /* Sfondo semitrasparente */
+            border: 2px solid rgba(255, 255, 255, 0.9); /* Bordo bianco solido */
+            border-radius: 16px;
+            /* Effetto NEON Diffuso */
+            box-shadow: 
+                0 0 15px rgba(255, 255, 255, 0.6),   /* Glow interno stretto */
+                0 0 40px rgba(255, 255, 255, 0.4),   /* Glow medio */
+                0 0 80px rgba(255, 255, 255, 0.2),   /* Glow diffuso largo */
+                inset 0 0 30px rgba(255, 255, 255, 0.1); /* Profondità interna */
+            backdrop-filter: blur(12px); /* Effetto vetro */
+        }
+
+        /* SFONDO GRAFICO (RIPRISTINATO) */
+        .bg-chart-overlay {
+            background-image: url('https://images.unsplash.com/photo-1640340434855-6084b1f4901c?q=80&w=2070&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            opacity: 0.3; 
+            filter: grayscale(100%) contrast(150%) brightness(0.6); 
+        }
+
+        /* --- STILE DASHBOARD --- */
+        .panel-glass {
+            background: rgba(20, 20, 20, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            transition: border-color 0.3s ease;
+        }
+        .panel-glass:hover {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* INPUT STYLE */
+        .inst-input {
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            border-radius: 8px;
+            padding: 14px;
+            transition: all 0.2s ease;
+        }
+        .inst-input:focus {
+            outline: none;
+            border-color: #fff;
+            background-color: #000;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+        .inst-input::placeholder { color: #666; text-transform: uppercase; font-size: 0.7rem; font-weight: 500; }
+        .inst-input-sm { padding: 10px; }
+
+        /* BUTTONS */
+        .btn-main {
+            background: #fff;
+            color: #000;
+            border: 1px solid #fff;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        .btn-main:hover { 
+            background: #e5e5e5; 
+            box-shadow: 0 0 20px rgba(255,255,255,0.4); 
+        }
+        .btn-main:active { transform: scale(0.98); }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid #333;
+            color: #9ca3af;
+            text-transform: uppercase;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            letter-spacing: 0.05em;
+        }
+        .btn-ghost:hover { border-color: #fff; color: #fff; background: rgba(255,255,255,0.05); }
+
+        /* SCROLLBAR */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: #555; }
+
+        /* RADIO BUTTONS - NEON EFFECT */
+        .radio-box div {
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        /* LONG NEON (GREEN) */
+        .radio-long input:checked + div {
+            border-color: #10b981;
+            color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5), inset 0 0 10px rgba(16, 185, 129, 0.1);
+            background: rgba(16, 185, 129, 0.05);
+            text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+        }
+
+        /* SHORT NEON (RED) */
+        .radio-short input:checked + div {
+            border-color: #ef4444;
+            color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.1);
+            background: rgba(239, 68, 68, 0.05);
+            text-shadow: 0 0 5px rgba(239, 68, 68, 0.5);
+        }
+
+        /* WHATSAPP FLOAT */
+        .whatsapp-float {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background-color: #25d366;
+            color: #FFF;
+            border-radius: 50px;
+            text-align: center;
+            font-size: 24px;
+            padding: 12px 14px;
+            box-shadow: 0px 0px 20px rgba(37, 211, 102, 0.4);
+            z-index: 100;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+        .whatsapp-float:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 5px 25px rgba(37, 211, 102, 0.6);
+        }
+        .wa-text { font-size: 12px; font-weight: bold; font-family: 'Inter', sans-serif; margin-right: 5px;}
+    </style>
+</head>
+<body class="h-screen w-screen overflow-hidden text-sm bg-bg_main">
+
+    <a href="https://wa.me/393345415707" target="_blank" class="whatsapp-float">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span class="wa-text">Support</span>
+    </a>
+
+    <div id="auth-container" class="fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+        <div class="absolute inset-0 bg-chart-overlay z-0 pointer-events-none"></div>
+        
+        <div id="login-screen" class="relative z-10 w-full max-w-lg animate-fade-in">
+            <div class="neon-white-3d p-6 md:p-10">
+                <div class="text-center mb-8 md:mb-10">
+                    <div class="flex justify-center mb-4 md:mb-6">
+                        <i class="fa-solid fa-chart-column text-4xl md:text-5xl text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"></i>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]">INTINI JOURNALING</h1>
+                    <div class="flex items-center justify-center gap-3 mt-4 opacity-90">
+                        <div class="h-px w-8 md:w-10 bg-white shadow-[0_0_8px_white]"></div>
+                        <p class="text-[9px] md:text-[10px] text-white font-mono tracking-[0.3em] uppercase">Professional Suite</p>
+                        <div class="h-px w-8 md:w-10 bg-white shadow-[0_0_8px_white]"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-5 md:space-y-6">
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase text-gray-300 font-mono ml-1">Operator ID</label>
+                        <input type="text" id="login-user" class="inst-input w-full text-sm md:text-base text-center tracking-widest" placeholder="ENTER ID">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[9px] uppercase text-gray-300 font-mono ml-1">Password</label>
+                        <input type="password" id="login-pass" class="inst-input w-full text-sm md:text-base text-center tracking-widest" placeholder="••••••••">
+                    </div>
+                    
+                    <button onclick="attemptLogin()" class="btn-main w-full py-3 md:py-4 text-xs tracking-widest mt-4">Authenticate</button>
+                    
+                    <div class="mt-8 flex justify-between items-center text-[10px] md:text-[11px]">
+                        <span onclick="toggleScreen('setup-screen')" class="cursor-pointer text-gray-300 hover:text-white transition border-b border-dotted border-gray-500 hover:border-white pb-0.5">Initialize Profile</span>
+                        <span onclick="toggleScreen('recovery-screen')" class="cursor-pointer text-gray-300 hover:text-white transition">Forgot Password?</span>
+                    </div>
+                    <p id="login-error" class="text-down text-[10px] text-center mt-4 font-mono hidden uppercase border border-down/20 bg-down/5 p-2 rounded-md">Invalid Credentials</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="recovery-screen" class="relative z-10 w-full max-w-lg hidden">
+            <div class="neon-white-3d p-6 md:p-10">
+                <h2 class="text-sm font-bold text-white mb-8 border-l-2 border-white pl-4 uppercase shadow-[0_0_10px_rgba(255,255,255,0.3)]">Account Recovery</h2>
+                <div class="space-y-5">
+                    <p class="text-[11px] text-gray-300 mb-2">Provide your details and the System Generated Key.</p>
+                    
+                    <input type="text" id="rec-user" class="inst-input w-full" placeholder="USER ID">
+                    <input type="email" id="rec-email" class="inst-input w-full" placeholder="REGISTERED EMAIL">
+                    <input type="password" id="rec-key" class="inst-input w-full border-blue-400/50 text-blue-100" placeholder="SYSTEM GENERATED KEY">
+                    
+                    <div class="space-y-1 pt-4 border-t border-white/20">
+                        <label class="text-[9px] uppercase text-gray-400 font-mono">Set New Password</label>
+                        <input type="password" id="rec-new-pass" class="inst-input w-full" placeholder="NEW PASSWORD">
+                        <p class="text-[9px] text-gray-400 ml-1 mt-1">* Min 8 chars, 1 Upper, 1 Special</p>
+                    </div>
+
+                    <div class="flex gap-4 pt-4">
+                        <button onclick="toggleScreen('login-screen')" class="btn-ghost w-1/3 py-3 border-gray-500 text-white">Cancel</button>
+                        <button onclick="attemptRecovery()" class="btn-main w-2/3 py-3 text-xs bg-white text-black">Reset Access</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="setup-screen" class="relative z-10 w-full max-w-lg hidden">
+            <div class="neon-white-3d p-6 md:p-10">
+                <div id="setup-form-view">
+                    <div class="mb-6 md:mb-8 text-center">
+                        <h2 class="text-sm font-bold text-white uppercase tracking-widest inline-block border-b border-white/30 pb-1">New Profile Setup</h2>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                             <input type="text" id="setup-user" class="inst-input w-full" placeholder="USER ID">
+                             <input type="email" id="setup-email" class="inst-input w-full" placeholder="EMAIL ADDRESS">
+                        </div>
+                        
+                        <div class="space-y-1">
+                             <input type="password" id="setup-pass" class="inst-input w-full" placeholder="PASSWORD">
+                             <p class="text-[9px] text-gray-400 ml-1">* Min 8 chars, 1 Upper, 1 Special</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="setup-currency" class="inst-input w-full text-xs bg-black/50 h-full">
+                                <option value="$">USD ($)</option>
+                                <option value="€">EUR (€)</option>
+                                <option value="£">GBP (£)</option>
+                                <option value="¥">JPY (¥)</option>
+                            </select>
+                            <input type="number" id="setup-capital" class="inst-input w-full text-xs" placeholder="INITIAL EQUITY">
+                        </div>
+
+                        <div class="space-y-1 mt-2">
+                            <label class="text-[9px] uppercase text-gray-400 font-mono ml-1">Interface Language</label>
+                            <select id="setup-lang" class="inst-input w-full text-xs bg-black/50">
+                                <option value="en">English (Default)</option>
+                                <option value="it">Italiano</option>
+                                <option value="fr">Français</option>
+                                <option value="de">Deutsch</option>
+                            </select>
+                        </div>
+
+                        <div class="flex gap-4 pt-6">
+                            <button onclick="toggleScreen('login-screen')" class="btn-ghost w-1/3 py-3 border-gray-500 text-white">Back</button>
+                            <button onclick="finalizeSetup()" class="btn-main w-2/3 py-3 text-xs">Generate Profile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="setup-success-view" class="hidden text-center space-y-6">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-[0_0_25px_white]">
+                        <i class="fa-solid fa-check text-2xl text-black"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-white">Profile Created</h2>
+                    <p class="text-xs text-gray-300 px-4">The system has generated a secure recovery key for you. <br><span class="text-white font-bold underline">You must save this key now</span>. It will not be shown again.</p>
+                    
+                    <div class="bg-black/40 p-5 rounded-lg border border-white/30 relative group">
+                        <p class="text-[9px] text-gray-400 uppercase tracking-widest mb-2">Your Recovery Key</p>
+                        <div id="display-gen-key" class="font-mono text-xl text-white font-bold tracking-wider select-all"></div>
+                    </div>
+
+                    <button onclick="toggleScreen('login-screen')" class="btn-main w-full py-4 text-xs mt-4">I Have Saved The Key</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-content" class="hidden h-screen w-full overflow-y-auto custom-scroll flex flex-col">
+        
+        <header class="sticky top-0 z-40 bg-black/80 border-b border-white/10 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center backdrop-blur-md">
+            <div class="flex items-center gap-4">
+                <div class="w-9 h-9 flex items-center justify-center border border-white/40 bg-white/5 rounded-lg shadow-[0_0_15px_rgba(255,255,255,0.15)]">
+                    <i class="fa-solid fa-book-journal-whills text-white text-sm"></i>
+                </div>
+                <div class="leading-tight">
+                    <div class="font-bold text-base tracking-wide text-white drop-shadow-sm">INTINI<span class="font-light text-gray-400">JOURNALING</span></div>
+                    <div class="text-[10px] text-gray-500 font-mono tracking-widest">QUANTUM TERMINAL <span class="text-white animate-pulse ml-1 shadow-[0_0_5px_white]">●</span></div>
+                </div>
+            </div>
+            <div class="flex items-center gap-6 text-xs font-mono">
+                <div class="hidden md:flex gap-6 text-[10px] text-gray-400 uppercase tracking-wider font-bold">
+                    <span class="flex items-center"><i class="fa-solid fa-signal mr-2 text-white"></i><span data-i18n="connected">Connected</span></span>
+                    <span class="flex items-center"><i class="fa-solid fa-lock mr-2 text-white"></i><span data-i18n="secure">Encrypted</span></span>
+                </div>
+                <div class="hidden md:block h-6 w-px bg-white/10 mx-2"></div>
+                <div class="flex items-center gap-3">
+                    <span id="nav-user" class="uppercase text-white font-bold hidden sm:inline tracking-wider">---</span>
+                    <button onclick="logout()" class="w-8 h-8 rounded-full border border-white/10 bg-white/5 flex items-center justify-center hover:bg-white hover:text-black transition duration-300"><i class="fa-solid fa-power-off"></i></button>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-grow p-3 md:p-4 lg:p-8 overflow-y-auto custom-scroll">
+            <div class="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
+
+                <aside class="lg:col-span-3 space-y-4 md:space-y-6 flex flex-col">
+                    
+                    <div class="panel-glass p-4 md:p-6">
+                        <div class="flex justify-between items-center mb-6 border-b border-white/10 pb-3">
+                            <h2 class="text-[11px] font-bold text-white uppercase tracking-[0.2em] flex items-center">
+                                <span class="w-1.5 h-1.5 bg-white rounded-full mr-2 shadow-[0_0_5px_white]"></span>
+                                <span data-i18n="order_entry">Execution</span>
+                            </h2>
+                            <span class="text-[9px] text-gray-500 font-mono border border-white/10 px-1.5 rounded">LIVE</span>
+                        </div>
+
+                        <form onsubmit="handleTrade(event)" class="space-y-4">
+                            <div class="grid grid-cols-2 gap-3">
+                                <input type="date" id="t-date" class="inst-input inst-input-sm text-[10px] text-gray-400">
+                                <input type="time" id="t-time" class="inst-input inst-input-sm text-[10px] text-gray-400">
+                            </div>
+
+                            <input type="text" id="t-asset" data-i18n-ph="ph_symbol" placeholder="SYMBOL" class="inst-input inst-input-sm text-sm font-bold uppercase text-white tracking-widest border-l-4 border-l-white w-full" required>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <select id="t-session" class="inst-input inst-input-sm text-[10px] text-center text-gray-400">
+                                    <option value="LDN">🇬🇧 LDN</option>
+                                    <option value="NY">🇺🇸 NY</option>
+                                    <option value="ASIA">🇯🇵 ASIA</option>
+                                </select>
+
+                                <select id="t-type" class="inst-input inst-input-sm text-[10px] text-center text-white font-bold bg-white/5 border-white/10">
+                                    <option value="SCALP">⚡ SCALPING</option>
+                                    <option value="INTRA">📅 INTRADAY</option>
+                                    <option value="SWING">🌊 SWING</option>
+                                </select>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <label class="cursor-pointer radio-box radio-long block">
+                                    <input type="radio" name="dir" value="LONG" class="hidden" id="dir-long" checked>
+                                    <div class="text-center py-3 border border-white/10 transition-all duration-300 rounded-lg">
+                                        <span class="text-xs font-bold tracking-widest">LONG</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer radio-box radio-short block">
+                                    <input type="radio" name="dir" value="SHORT" class="hidden" id="dir-short">
+                                    <div class="text-center py-3 border border-white/10 transition-all duration-300 rounded-lg">
+                                        <span class="text-xs font-bold tracking-widest">SHORT</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2.5 text-[9px] text-gray-500 font-bold" data-i18n="lots">LOTS</span>
+                                    <input type="number" step="0.01" id="t-lots" class="inst-input inst-input-sm w-full pt-6 text-sm text-white font-mono bg-black/40">
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2.5 text-[9px] text-gray-500 font-bold">RISK%</span>
+                                    <input type="number" step="0.1" id="t-risk" class="inst-input inst-input-sm w-full pt-6 text-sm text-white font-mono bg-black/40" oninput="calcAutoPnL()">
+                                </div>
+                            </div>
+
+                            <div class="bg-white/[0.03] p-4 border border-white/10 space-y-3 rounded-lg">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="relative">
+                                        <span class="absolute left-2 top-2.5 text-[9px] text-gray-500">R:R</span>
+                                        <input type="number" step="0.1" id="t-rr" class="inst-input inst-input-sm w-full pl-8 text-xs text-right bg-black/50" oninput="calcAutoPnL()">
+                                    </div>
+                                    <select id="t-grade" class="inst-input inst-input-sm text-[10px] text-center bg-black/50 text-white font-bold border-white/20">
+                                        <option value="A">Grade A</option><option value="B">Grade B</option><option value="C">Grade C</option>
+                                    </select>
+                                </div>
+                                <select id="t-outcome" class="inst-input inst-input-sm w-full text-xs font-bold text-center border-white/10 bg-white/5" onchange="calcAutoPnL()">
+                                    <option value="" disabled selected data-i18n="outcome_sel">-- OUTCOME --</option>
+                                    <option value="TP" class="text-up" data-i18n="tp">TAKE PROFIT</option>
+                                    <option value="SL" class="text-down" data-i18n="sl">STOP LOSS</option>
+                                    <option value="BE" class="text-gray-400" data-i18n="be">BREAK EVEN</option>
+                                </select>
+                                <div class="flex items-center justify-between border-t border-white/10 pt-3 mt-1">
+                                    <span class="text-[9px] uppercase text-gray-400 font-bold tracking-wider" data-i18n="proj_pnl">Projected P&L</span>
+                                    <input type="number" step="any" id="t-pnl" placeholder="0.00" class="inst-input inst-input-sm w-28 p-0 text-right text-base font-bold bg-transparent border-none focus:bg-transparent text-white focus:shadow-none shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+                                </div>
+                            </div>
+
+                            <textarea id="t-notes" class="inst-input inst-input-sm w-full p-3 text-xs h-20 resize-none bg-black/40" data-i18n-ph="ph_notes" placeholder="Execution logic..."></textarea>
+                            
+                            <button type="submit" class="btn-main w-full py-3.5 text-[10px] tracking-[0.2em] shadow-[0_0_15px_rgba(255,255,255,0.2)]" data-i18n="commit">COMMIT TRADE</button>
+                        </form>
+                    </div>
+
+                    <div class="panel-glass p-4 md:p-6 flex-grow flex flex-col justify-between min-h-[250px]">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-white mb-6 flex items-center justify-between border-b border-white/10 pb-2">
+                            <span><i class="fa-solid fa-chart-pie mr-2 text-white"></i><span data-i18n="edge_metrics">Edge Metrics</span></span>
+                        </h3>
+                        
+                        <div class="space-y-6 flex-grow">
+                            <div class="group">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-[9px] uppercase text-gray-400 tracking-wider" data-i18n="dom_session">Dominant Session</span>
+                                    <span id="best-session" class="text-base font-mono font-bold text-white">-</span>
+                                </div>
+                                <div class="h-0.5 w-full bg-white/5 rounded overflow-hidden">
+                                    <div class="h-full bg-white w-2/3 shadow-[0_0_8px_white]"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="group">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-[9px] uppercase text-gray-400 tracking-wider" data-i18n="top_inst">Top Instrument</span>
+                                    <span id="best-pair" class="text-base font-mono font-bold text-white">-</span>
+                                </div>
+                                <div class="h-0.5 w-full bg-white/5 rounded overflow-hidden">
+                                    <div class="h-full bg-white w-1/2 shadow-[0_0_8px_white]"></div>
+                                </div>
+                            </div>
+
+                            <div class="group">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-[9px] uppercase text-gray-400 tracking-wider" data-i18n="avg_rr">Avg Win R:R</span>
+                                    <span id="best-rr" class="text-base font-mono font-bold text-up">-</span>
+                                </div>
+                                <div class="h-0.5 w-full bg-white/5 rounded overflow-hidden">
+                                    <div class="h-full bg-up w-3/4 shadow-[0_0_8px_#10b981]"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-auto pt-4 border-t border-white/5 flex justify-between text-[9px] text-gray-600 font-mono">
+                             <span>V6.0 PRO</span>
+                             <span>LATENCY: 8ms</span>
+                         </div>
+                    </div>
+                </aside>
+
+                <main class="lg:col-span-9 flex flex-col gap-4 md:gap-6">
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                        <div class="panel-glass p-4 md:p-6 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group">
+                            <p class="text-[9px] text-gray-400 uppercase tracking-widest font-bold" data-i18n="equity">Total Equity</p>
+                            <h4 id="kpi-balance" class="text-xl md:text-3xl font-mono font-bold text-white tracking-tight drop-shadow-[0_0_5px_rgba(255,255,255,0.3)]">---</h4>
+                        </div>
+                        <div class="panel-glass p-4 md:p-6 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group">
+                            <p class="text-[9px] text-gray-400 uppercase tracking-widest font-bold" data-i18n="strike">Strike Rate</p>
+                            <h4 id="kpi-wr" class="text-xl md:text-3xl font-mono font-bold text-white tracking-tight">---</h4>
+                        </div>
+                        <div class="panel-glass p-4 md:p-6 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group">
+                            <p class="text-[9px] text-gray-400 uppercase tracking-widest font-bold" data-i18n="pf">Profit Factor</p>
+                            <h4 id="kpi-pf" class="text-xl md:text-3xl font-mono font-bold text-white tracking-tight">---</h4>
+                        </div>
+                        <div class="panel-glass p-4 md:p-6 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group">
+                            <p class="text-[9px] text-gray-400 uppercase tracking-widest font-bold" data-i18n="execs">Total Executions</p>
+                            <h4 id="kpi-count" class="text-xl md:text-3xl font-mono font-bold text-white tracking-tight">0</h4>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                        <div class="panel-glass p-4 md:p-6 lg:col-span-2 h-[280px] md:h-[450px] relative">
+                            <div class="absolute top-4 left-4 md:top-6 md:left-6 flex items-center gap-2 z-10">
+                                <span class="w-2 h-2 bg-white rounded-full shadow-[0_0_5px_white]"></span>
+                                <span class="text-[10px] uppercase font-bold text-white tracking-widest" data-i18n="curve">Equity Growth Curve</span>
+                            </div>
+                            <div class="h-full w-full pt-10">
+                                <canvas id="chartEquity"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div class="panel-glass p-4 md:p-6 h-[280px] md:h-[450px] relative">
+                            <div class="absolute top-4 left-4 md:top-6 md:left-6 flex items-center gap-2 z-10">
+                                <span class="w-2 h-2 bg-white/50 rounded-full"></span>
+                                <span class="text-[10px] uppercase font-bold text-white tracking-widest" data-i18n="dist">Net PnL Distribution</span>
+                            </div>
+                            <div class="h-full w-full pt-10">
+                                <canvas id="chartDistribution"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel-glass flex-grow flex flex-col min-h-[500px]">
+                        <div class="p-4 border-b border-white/10 flex justify-between items-center bg-white/[0.02]">
+                            <h3 class="text-[10px] font-bold uppercase tracking-widest text-white ml-2 flex items-center">
+                                <i class="fa-solid fa-list-ul mr-2 opacity-50"></i><span data-i18n="ledger">Master Ledger</span>
+                            </h3>
+                            <button onclick="exportCSV()" class="btn-ghost px-4 py-2 border-white/20 hover:border-white text-white text-[10px]"><i class="fa-solid fa-download mr-1"></i> CSV EXPORT</button>
+                        </div>
+                        
+                        <div class="overflow-x-auto overflow-y-auto flex-grow custom-scroll bg-black/20 h-full rounded-b-xl">
+                            <table class="w-full text-left border-collapse whitespace-nowrap">
+                                <thead class="sticky top-0 bg-[#0a0a0a] text-[9px] text-gray-400 uppercase font-bold tracking-wider z-10 shadow-lg border-b border-white/10">
+                                    <tr>
+                                        <th class="p-4 pl-6" data-i18n="th_time">Timestamp</th>
+                                        <th class="p-4" data-i18n="th_inst">Instrument</th>
+                                        <th class="p-4" data-i18n="th_dir">Direction</th>
+                                        <th class="p-4" data-i18n="th_size">Size (Lots)</th>
+                                        <th class="p-4">R:R</th>
+                                        <th class="p-4">Risk %</th>
+                                        <th class="p-4 text-right pr-6" data-i18n="th_pnl">Net P&L</th>
+                                        <th class="p-4 text-center">Opt.</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="trade-body" class="font-mono text-xs text-gray-300 divide-y divide-white/5">
+                                </tbody>
+                            </table>
+                            
+                            <div id="empty-state" class="flex flex-col items-center justify-center h-64 text-gray-700 hidden">
+                                <i class="fa-solid fa-box-open text-5xl mb-4 opacity-20 text-white"></i>
+                                <span class="text-[10px] uppercase tracking-widest text-gray-500" data-i18n="no_rec">No Executions Recorded</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- TRANSLATIONS ---
+        const translations = {
+            en: {
+                connected: "Connected", secure: "Encrypted", order_entry: "Execution", ph_symbol: "SYMBOL",
+                lots: "LOTS", outcome_sel: "-- OUTCOME --", tp: "TAKE PROFIT", sl: "STOP LOSS", be: "BREAK EVEN",
+                proj_pnl: "Projected P&L", ph_notes: "Execution logic...", commit: "COMMIT TRADE",
+                edge_metrics: "Edge Metrics", dom_session: "Dominant Session", top_inst: "Top Instrument", avg_rr: "Avg Win R:R",
+                equity: "Total Equity", strike: "Strike Rate", pf: "Profit Factor", execs: "Total Executions",
+                curve: "Equity Growth Curve", dist: "Net PnL Distribution", ledger: "Master Ledger",
+                th_time: "Timestamp", th_inst: "Instrument", th_dir: "Direction", th_size: "Size (Lots)", th_pnl: "Net P&L", no_rec: "No Executions Recorded"
+            },
+            it: {
+                connected: "Connesso", secure: "Criptato", order_entry: "Nuovo Ordine", ph_symbol: "SIMBOLO",
+                lots: "LOTTI", outcome_sel: "-- ESITO --", tp: "TAKE PROFIT", sl: "STOP LOSS", be: "PAREGGIO",
+                proj_pnl: "P&L Stimato", ph_notes: "Logica trade...", commit: "ESEGUI TRADE",
+                edge_metrics: "Metriche Edge", dom_session: "Sessione Dominante", top_inst: "Miglior Asset", avg_rr: "R:R Medio Vincente",
+                equity: "Capitale Totale", strike: "Win Rate", pf: "Profit Factor", execs: "Esecuzioni Totali",
+                curve: "Curva del Capitale", dist: "Distribuzione PnL", ledger: "Registro Operazioni",
+                th_time: "Data/Ora", th_inst: "Strumento", th_dir: "Direzione", th_size: "Dim. (Lotti)", th_pnl: "P&L Netto", no_rec: "Nessuna Operazione"
+            },
+            fr: {
+                connected: "Connecté", secure: "Chiffré", order_entry: "Saisie d'Ordre", ph_symbol: "SYMBOLE",
+                lots: "LOTS", outcome_sel: "-- RÉSULTAT --", tp: "TAKE PROFIT", sl: "STOP LOSS", be: "POINT MORT",
+                proj_pnl: "P&L Projeté", ph_notes: "Logique...", commit: "VALIDER TRADE",
+                edge_metrics: "Métriques", dom_session: "Session Dominante", top_inst: "Meilleur Inst.", avg_rr: "R:R Moyen",
+                equity: "Capital Total", strike: "Taux Réussite", pf: "Facteur Profit", execs: "Total Exécutions",
+                curve: "Croissance Capital", dist: "Distribution PnL", ledger: "Grand Livre",
+                th_time: "Horodatage", th_inst: "Instrument", th_dir: "Direction", th_size: "Taille (Lots)", th_pnl: "P&L Net", no_rec: "Aucune Donnée"
+            },
+            de: {
+                connected: "Verbunden", secure: "Verschlüsselt", order_entry: "Auftragserfassung", ph_symbol: "SYMBOL",
+                lots: "LOTS", outcome_sel: "-- ERGEBNIS --", tp: "TAKE PROFIT", sl: "STOP LOSS", be: "BREAK EVEN",
+                proj_pnl: "Proj. P&L", ph_notes: "Logik...", commit: "TRADE AUSFÜHREN",
+                edge_metrics: "Vorteilsmetriken", dom_session: "Dom. Sitzung", top_inst: "Top Instrument", avg_rr: "Durchschn. R:R",
+                equity: "Gesamtkapital", strike: "Trefferquote", pf: "Profitfaktor", execs: "Ausführungen",
+                curve: "Kapitalkurve", dist: "PnL Verteilung", ledger: "Hauptbuch",
+                th_time: "Zeitstempel", th_inst: "Instrument", th_dir: "Richtung", th_size: "Größe (Lots)", th_pnl: "Netto P&L", no_rec: "Keine Ausführungen"
+            }
+        };
+
+        // --- CORE DATA ---
+        let users = JSON.parse(localStorage.getItem('intini_pro_v6')) || {};
+        let currentUser = null;
+        let currentLang = 'en';
+        let activeTrades = [];
+        let eqChart, distChart;
+
+        // --- AUTH ---
+        function toggleScreen(id) {
+            ['login-screen', 'setup-screen', 'recovery-screen'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            
+            // Reset setup views if moving away
+            if(id !== 'setup-screen') {
+                document.getElementById('setup-form-view').classList.remove('hidden');
+                document.getElementById('setup-success-view').classList.add('hidden');
+            }
+        }
+
+        // GENERATE KEY UTILITY
+        function generateRecoveryKey() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
+            let key = 'KEY-';
+            for (let i = 0; i < 4; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+            key += '-';
+            for (let i = 0; i < 4; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+            return key;
+        }
+
+        function finalizeSetup() {
+            const u = document.getElementById('setup-user').value.trim();
+            const p = document.getElementById('setup-pass').value;
+            const email = document.getElementById('setup-email').value.trim();
+            const cap = parseFloat(document.getElementById('setup-capital').value) || 100000;
+            const cur = document.getElementById('setup-currency').value;
+            const lang = document.getElementById('setup-lang').value;
+
+            // Validations
+            const passRegex = /^(?=.*[A-Z])(?=.*[\W_]).{8,}$/;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if(u.length < 2) return alert("Error: User ID too short");
+            if(!emailRegex.test(email)) return alert("Error: Invalid Email Address");
+            if(!passRegex.test(p)) return alert("Error: Password must be min 8 chars, contain 1 Uppercase and 1 Special Character.");
+            if(users[u]) return alert("Error: Operator ID Exists");
+
+            // Generate Key
+            const genKey = generateRecoveryKey();
+
+            users[u] = { 
+                pass: p, 
+                email: email,
+                recovery: genKey, 
+                capital: cap, 
+                currency: cur, 
+                lang: lang, 
+                trades: [] 
+            };
+            
+            localStorage.setItem('intini_pro_v6', JSON.stringify(users));
+
+            // Show Success View
+            document.getElementById('setup-form-view').classList.add('hidden');
+            document.getElementById('setup-success-view').classList.remove('hidden');
+            document.getElementById('display-gen-key').innerText = genKey;
+        }
+
+        function attemptLogin() {
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value;
+            
+            if(users[u] && users[u].pass === p) {
+                currentUser = u;
+                currentLang = users[u].lang || 'en';
+                activeTrades = users[u].trades || [];
+                enterApp();
+            } else {
+                const err = document.getElementById('login-error');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 2000);
+            }
+        }
+
+        function attemptRecovery() {
+            const u = document.getElementById('rec-user').value.trim();
+            const email = document.getElementById('rec-email').value.trim();
+            const k = document.getElementById('rec-key').value.trim();
+            const newP = document.getElementById('rec-new-pass').value;
+            const passRegex = /^(?=.*[A-Z])(?=.*[\W_]).{8,}$/;
+
+            if(users[u] && users[u].email === email && users[u].recovery === k) {
+                if(!passRegex.test(newP)) return alert("Error: New Password must be min 8 chars, contain 1 Uppercase and 1 Special Character.");
+                
+                users[u].pass = newP;
+                localStorage.setItem('intini_pro_v6', JSON.stringify(users));
+                alert("Password Reset Successful. Please Login.");
+                toggleScreen('login-screen');
+            } else {
+                alert("Invalid Credentials (User, Email or Key mismatch).");
+            }
+        }
+
+        function applyLanguage(lang) {
+            const t = translations[lang];
+            if(!t) return;
+            
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                if(t[el.dataset.i18n]) el.innerText = t[el.dataset.i18n];
+            });
+
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+                if(t[el.dataset.i18nPh]) el.placeholder = t[el.dataset.i18nPh];
+            });
+        }
+
+        function enterApp() {
+            document.getElementById('auth-container').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+            document.getElementById('nav-user').innerText = `${currentUser}`;
+            
+            applyLanguage(currentLang);
+
+            const now = new Date();
+            document.getElementById('t-date').valueAsDate = now;
+            document.getElementById('t-time').value = now.toTimeString().slice(0,5);
+            
+            updateUI();
+        }
+
+        function logout() { location.reload(); }
+
+        // --- TRADING ENGINE ---
+        function calcAutoPnL() {
+            const riskPct = parseFloat(document.getElementById('t-risk').value);
+            const rr = parseFloat(document.getElementById('t-rr').value);
+            const outcome = document.getElementById('t-outcome').value;
+            
+            if(!riskPct || !outcome) return;
+
+            const currentEquity = getCurrentEquity();
+            const riskAmount = currentEquity * (riskPct / 100);
+            
+            let res = 0;
+            if(outcome === 'TP') res = riskAmount * rr;
+            else if(outcome === 'SL') res = -riskAmount;
+            
+            document.getElementById('t-pnl').value = res.toFixed(2);
+        }
+
+        function getCurrentEquity() {
+            if(!currentUser) return 0;
+            return users[currentUser].capital + activeTrades.reduce((a,b)=>a+b.pnl, 0);
+        }
+
+        function handleTrade(e) {
+            e.preventDefault();
+            const dir = document.querySelector('input[name="dir"]:checked').value;
+            
+            const trade = {
+                id: Date.now(),
+                date: document.getElementById('t-date').value,
+                time: document.getElementById('t-time').value,
+                asset: document.getElementById('t-asset').value.toUpperCase(),
+                session: document.getElementById('t-session').value,
+                type: document.getElementById('t-type').value, // NEW: Trade Type
+                direction: dir,
+                lots: document.getElementById('t-lots').value || 0,
+                risk: document.getElementById('t-risk').value || 0,
+                rr: document.getElementById('t-rr').value || 0,
+                grade: document.getElementById('t-grade').value,
+                outcome: document.getElementById('t-outcome').value,
+                pnl: parseFloat(document.getElementById('t-pnl').value) || 0,
+                notes: document.getElementById('t-notes').value
+            };
+
+            activeTrades.push(trade);
+            save();
+            e.target.reset();
+            document.getElementById('t-date').valueAsDate = new Date();
+            document.getElementById('dir-long').checked = true;
+            updateUI();
+        }
+
+        function deleteTrade(id) {
+            if(confirm("Confirm deletion of ledger record?")) {
+                activeTrades = activeTrades.filter(t => t.id !== id);
+                save();
+                updateUI();
+            }
+        }
+
+        function save() {
+            users[currentUser].trades = activeTrades;
+            localStorage.setItem('intini_pro_v6', JSON.stringify(users));
+        }
+
+        // --- RENDER UI ---
+        function updateUI() {
+            const tbody = document.getElementById('trade-body');
+            tbody.innerHTML = '';
+            document.getElementById('empty-state').classList.toggle('hidden', activeTrades.length > 0);
+
+            let totalPnL = 0, wins = 0, grossWin = 0, grossLoss = 0;
+            let sessions = {}, assets = {}, rrs = [];
+
+            [...activeTrades].reverse().forEach(t => {
+                totalPnL += t.pnl;
+                if(t.pnl > 0) { wins++; grossWin += t.pnl; rrs.push(parseFloat(t.rr)); }
+                else if(t.pnl < 0) { grossLoss += Math.abs(t.pnl); }
+
+                sessions[t.session] = (sessions[t.session]||0)+1;
+                assets[t.asset] = (assets[t.asset]||0)+1;
+
+                const pnlClass = t.pnl > 0 ? 'text-up' : (t.pnl < 0 ? 'text-down' : 'text-gray-500');
+                const dirClass = t.direction === 'LONG' ? 'text-up border-up' : 'text-down border-down';
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-white/[0.05] transition duration-200 group border-b border-white/5">
+                        <td class="p-4 pl-6 text-gray-400 font-mono">${t.date} <span class="text-[9px] opacity-50 ml-1">${t.time}</span></td>
+                        <td class="p-4 font-bold text-white tracking-wider">
+                            ${t.asset} 
+                            <span class="text-[9px] text-gray-500 ml-2 border border-white/10 px-1 rounded">${t.type || 'N/A'}</span>
+                        </td>
+                        <td class="p-4"><span class="${dirClass} border px-2 py-0.5 text-[10px] rounded font-bold bg-white/[0.05]">${t.direction}</span></td>
+                        <td class="p-4 text-gray-300 font-mono">${t.lots}</td>
+                        <td class="p-4 text-gray-300">${t.rr}R</td>
+                        <td class="p-4 text-gray-500">${t.risk}%</td>
+                        <td class="p-4 pr-6 ${pnlClass} font-bold text-right tracking-wider text-sm shadow-sm">${t.pnl > 0 ? '+' : ''}${t.pnl.toFixed(2)}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteTrade(${t.id})" class="text-gray-600 hover:text-white transition"><i class="fa-solid fa-trash-can"></i></button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const startCap = users[currentUser].capital;
+            const bal = startCap + totalPnL;
+            const sym = users[currentUser].currency;
+
+            document.getElementById('kpi-balance').innerText = `${sym} ${bal.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+            document.getElementById('kpi-wr').innerText = activeTrades.length ? ((wins/activeTrades.length)*100).toFixed(1) + '%' : '0.0%';
+            document.getElementById('kpi-pf').innerText = grossLoss ? (grossWin/grossLoss).toFixed(2) : (grossWin ? '∞' : '0.00');
+            document.getElementById('kpi-count').innerText = activeTrades.length;
+
+            const getTop = (o) => Object.entries(o).sort((a,b)=>b[1]-a[1])[0]?.[0] || '-';
+            document.getElementById('best-session').innerText = getTop(sessions);
+            document.getElementById('best-pair').innerText = getTop(assets);
+            document.getElementById('best-rr').innerText = rrs.length ? (rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(2) + 'R' : '-';
+
+            drawCharts(startCap);
+        }
+
+        function drawCharts(startCap) {
+            Chart.defaults.color = '#6b7280'; 
+            Chart.defaults.font.family = 'JetBrains Mono';
+            Chart.defaults.font.size = 10;
+
+            const ctxE = document.getElementById('chartEquity').getContext('2d');
+            let runBal = startCap;
+            const dataE = [startCap, ...activeTrades.map(t => runBal += t.pnl)];
+            
+            if(eqChart) eqChart.destroy();
+            eqChart = new Chart(ctxE, {
+                type: 'line',
+                data: {
+                    labels: ['START', ...activeTrades.map((_,i)=>i+1)],
+                    datasets: [{
+                        data: dataE,
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointRadius: 0,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#fff',
+                        fill: true,
+                        backgroundColor: (ctx) => {
+                            const grad = ctx.chart.ctx.createLinearGradient(0,0,0,400);
+                            grad.addColorStop(0, 'rgba(255, 255, 255, 0.15)');
+                            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                            return grad;
+                        }
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: {display:false}, tooltip: {mode: 'index', intersect: false, backgroundColor: 'rgba(0,0,0,0.8)', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1, padding: 10} },
+                    scales: {
+                        x: { display: false },
+                        y: { position: 'right', grid: { color: 'rgba(255,255,255,0.05)' } }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
+
+            const ctxD = document.getElementById('chartDistribution').getContext('2d');
+            const assetPnl = {};
+            activeTrades.forEach(t => assetPnl[t.asset] = (assetPnl[t.asset]||0) + t.pnl);
+            
+            if(distChart) distChart.destroy();
+            distChart = new Chart(ctxD, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(assetPnl),
+                    datasets: [{
+                        data: Object.values(assetPnl),
+                        backgroundColor: Object.values(assetPnl).map(v => v>=0 ? '#ffffff' : 'rgba(255,255,255,0.1)'),
+                        borderRadius: 4,
+                        borderWidth: 0,
+                        barThickness: 'flex',
+                        maxBarThickness: 50
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: {display:false} },
+                    scales: {
+                        y: { position: 'right', grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false } },
+                        x: { grid: { display: false }, ticks: { color: '#6b7280' } }
+                    }
+                }
+            });
+        }
+
+        function exportCSV() {
+            let csv = "Date,Time,Asset,Type,Dir,Lots,PnL,Grade,Note\n";
+            activeTrades.forEach(t => csv += `${t.date},${t.time},${t.asset},${t.type},${t.direction},${t.lots},${t.pnl},${t.grade},"${t.notes}"\n`);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
+            a.download = `Intini_Journaling_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
