@@ -2992,7 +2992,8 @@
 
         // DevTools open detection via size change
         const _threshold = 160;
-        const _detectDevTools = setInterval(function() {
+        const _isMobile = /Mobi|Android|iPhone|iPad|iPod|Opera Mini|IEMobile|WPDesktop/i.test(navigator.userAgent) || ('ontouchstart' in window) || (navigator.maxTouchPoints > 1);
+        const _detectDevTools = !_isMobile && setInterval(function() {
             if (
                 window.outerWidth - window.innerWidth > _threshold ||
                 window.outerHeight - window.innerHeight > _threshold
