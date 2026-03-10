@@ -1,0 +1,2083 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Intini Journaling | Professional Suite</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        up: '#10b981',
+                        down: '#ef4444',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'scale-in': 'scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* --- VARIABILI GLOBALI TEMA (DARK DI DEFAULT) --- */
+        :root {
+            --bg-body: #050505;
+            --text-main: #e5e5e5;
+            --text-muted: #9ca3af;
+            --panel-bg: rgba(20, 20, 20, 0.5);
+            --input-bg: rgba(0, 0, 0, 0.6);
+            --input-border: #333333;
+            --hover-bg: rgba(255, 255, 255, 0.05);
+            --chart-grid: rgba(255, 255, 255, 0.05);
+            --chart-text: #6b7280;
+            
+            /* Variabili Dinamiche per BORDI (Sottili e sfumati) */
+            --dyn-border: rgba(255, 255, 255, 0.15);
+            --dyn-glow: rgba(255, 255, 255, 0.03);
+            
+            /* Variabili Dinamiche per GRAFICI */
+            --dyn-chart: #ffffff;
+            --dyn-chart-alpha: rgba(255, 255, 255, 0.15);
+        }
+
+        /* --- TEMA CHIARO (LIGHT MODE) --- */
+        body.light-mode {
+            --bg-body: #f3f4f6;
+            --text-main: #111827;
+            --text-muted: #4b5563;
+            --panel-bg: rgba(255, 255, 255, 0.85);
+            --input-bg: rgba(255, 255, 255, 0.9);
+            --input-border: #d1d5db;
+            --hover-bg: rgba(0, 0, 0, 0.05);
+            --chart-grid: rgba(0, 0, 0, 0.05);
+            --chart-text: #4b5563;
+        }
+
+        /* --- COLORI BORDI PANNELLI --- */
+        body.border-white { --dyn-border: rgba(255, 255, 255, 0.2); --dyn-glow: rgba(255, 255, 255, 0.05); }
+        body.border-red { --dyn-border: rgba(239, 68, 68, 0.3); --dyn-glow: rgba(239, 68, 68, 0.08); }
+        body.border-blue { --dyn-border: rgba(14, 165, 233, 0.3); --dyn-glow: rgba(14, 165, 233, 0.08); }
+        body.border-fuchsia { --dyn-border: rgba(217, 70, 239, 0.3); --dyn-glow: rgba(217, 70, 239, 0.08); }
+        body.border-yellow { --dyn-border: rgba(234, 179, 8, 0.3); --dyn-glow: rgba(234, 179, 8, 0.08); }
+        body.border-green { --dyn-border: rgba(16, 185, 129, 0.3); --dyn-glow: rgba(16, 185, 129, 0.08); }
+
+        body.light-mode.border-white { --dyn-border: rgba(0, 0, 0, 0.15); --dyn-glow: rgba(0, 0, 0, 0.03); }
+
+        /* --- COLORI GRAFICI --- */
+        body.chart-white { --dyn-chart: #ffffff; --dyn-chart-alpha: rgba(255, 255, 255, 0.15); }
+        body.chart-red { --dyn-chart: #ef4444; --dyn-chart-alpha: rgba(239, 68, 68, 0.15); }
+        body.chart-blue { --dyn-chart: #0ea5e9; --dyn-chart-alpha: rgba(14, 165, 233, 0.15); }
+        body.chart-fuchsia { --dyn-chart: #d946ef; --dyn-chart-alpha: rgba(217, 70, 239, 0.15); }
+        body.chart-yellow { --dyn-chart: #eab308; --dyn-chart-alpha: rgba(234, 179, 8, 0.15); }
+        body.chart-green { --dyn-chart: #10b981; --dyn-chart-alpha: rgba(16, 185, 129, 0.15); }
+
+        body.light-mode.chart-white { --dyn-chart: #111827; --dyn-chart-alpha: rgba(17, 24, 39, 0.15); }
+
+        body { 
+            background-color: var(--bg-body); color: var(--text-main);
+            font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased;
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* --- STILE DASHBOARD PANELS (Bordi Sottili e Sfumati) --- */
+        .panel-glass {
+            background: var(--panel-bg);
+            border: 1px solid var(--dyn-border); /* Bordo fine */
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1), inset 0 0 15px var(--dyn-glow); /* Ombra sfumata */
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            color: var(--text-main);
+        }
+        .panel-glass:hover {
+            box-shadow: 0 8px 30px rgba(0,0,0,0.2), 0 0 25px var(--dyn-glow), inset 0 0 20px var(--dyn-glow);
+            transform: translateY(-2px);
+        }
+
+        /* Testi specifici per light/dark */
+        .text-dynamic { color: var(--text-main); }
+        .text-dynamic-muted { color: var(--text-muted); }
+        .border-dynamic { border-color: var(--dyn-border); }
+        .bg-dynamic-hover:hover { background-color: var(--hover-bg); }
+
+        /* INPUT STYLE */
+        .inst-input {
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-main);
+            font-family: 'JetBrains Mono', monospace;
+            border-radius: 8px;
+            padding: 14px;
+            transition: all 0.3s ease;
+        }
+        .inst-input:focus {
+            outline: none; border-color: var(--text-main); box-shadow: 0 0 15px var(--dyn-glow); transform: scale(1.01);
+        }
+        .inst-input::placeholder { color: var(--text-muted); text-transform: uppercase; font-size: 0.7rem; font-weight: 500; }
+        .inst-input-sm { padding: 10px; }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        /* BUTTONS */
+        .btn-main {
+            background: var(--text-main); color: var(--bg-body);
+            border: 1px solid var(--text-main); font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; border-radius: 8px; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-main:hover { transform: translateY(-2px); box-shadow: 0 5px 15px var(--dyn-glow); opacity: 0.9; }
+        .btn-main:active { transform: scale(0.95); }
+
+        .btn-ghost {
+            background: transparent; border: 1px solid var(--input-border); color: var(--text-muted);
+            text-transform: uppercase; border-radius: 8px; font-size: 0.7rem; letter-spacing: 0.05em; transition: all 0.2s;
+        }
+        .btn-ghost:hover { border-color: var(--text-main); color: var(--text-main); background: var(--hover-bg); }
+        .btn-ghost:active { transform: scale(0.95); }
+
+        /* SCROLLBAR */
+        .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: var(--input-border); border-radius: 3px; }
+        .custom-scroll::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* RADIO BUTTONS */
+        .radio-box div { border: 1px solid var(--dyn-border); transition: all 0.3s ease; color: var(--text-main); }
+        .radio-long input:checked + div {
+            border-color: #10b981; color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(16, 185, 129, 0.1);
+            background: rgba(16, 185, 129, 0.05); transform: scale(1.02);
+        }
+        .radio-short input:checked + div {
+            border-color: #ef4444; color: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(239, 68, 68, 0.1);
+            background: rgba(239, 68, 68, 0.05); transform: scale(1.02);
+        }
+
+        /* CALENDAR */
+        .cal-day-pos { border-color: #10b981 !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3), inset 0 0 10px rgba(16, 185, 129, 0.1) !important; background: rgba(16, 185, 129, 0.08) !important; }
+        .cal-day-neg { border-color: #ef4444 !important; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3), inset 0 0 10px rgba(239, 68, 68, 0.1) !important; background: rgba(239, 68, 68, 0.08) !important; }
+
+        /* TOGGLE SWITCH */
+        .toggle-checkbox:checked { right: 0; border-color: #10b981; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #10b981; }
+        .toggle-checkbox { right: auto; left: 0; z-index: 1; transition: all 0.3s; }
+        .toggle-label { transition: all 0.3s; }
+
+        /* HEATMAP CELLS */
+        .hm-cell { transition: all 0.2s; border: 1px solid var(--bg-body); }
+        .hm-cell:hover { transform: scale(1.1); z-index: 10; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+
+        .delay-100 { animation-delay: 100ms; }
+        .delay-200 { animation-delay: 200ms; }
+        .delay-300 { animation-delay: 300ms; }
+    </style>
+</head>
+<body class="theme-white border-white chart-white h-screen w-screen overflow-hidden text-sm relative">
+
+    <div id="auth-container" class="fixed inset-0 z-50 flex items-center justify-center bg-black p-4 transition-opacity duration-500">
+        <div class="absolute inset-0 bg-chart-overlay z-0 pointer-events-none" style="background-image: url('https://images.unsplash.com/photo-1640340434855-6084b1f4901c?q=80&w=2070&auto=format&fit=crop'); background-size: cover; opacity: 0.15; filter: grayscale(100%) brightness(0.6);"></div>
+        
+        <div id="login-screen" class="relative z-10 w-full max-w-lg animate-fade-in-up">
+            <div class="panel-glass p-6 md:p-10 text-white" style="background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2);">
+                <div class="text-center mb-8 md:mb-10 hover:scale-105 transition duration-500">
+                    <div class="flex justify-center mb-4 md:mb-6">
+                        <i class="fa-solid fa-chart-column text-4xl md:text-5xl drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]"></i>
+                    </div>
+                    <h1 class="text-2xl md:text-3xl font-bold tracking-tight drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]">INTINI JOURNALING</h1>
+                    <div class="flex items-center justify-center gap-3 mt-4 opacity-90">
+                        <div class="h-px w-8 md:w-10 bg-white shadow-[0_0_8px_white]"></div>
+                        <p class="text-[9px] md:text-[10px] font-mono tracking-[0.3em] uppercase">Professional Suite</p>
+                        <div class="h-px w-8 md:w-10 bg-white shadow-[0_0_8px_white]"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-5 md:space-y-6">
+                    <div class="space-y-1 group">
+                        <label class="text-[9px] uppercase text-gray-300 font-mono ml-1 group-focus-within:text-white transition">Operator ID</label>
+                        <input type="text" id="login-user" class="inst-input w-full text-sm md:text-base text-center tracking-widest bg-black/50 text-white border-gray-600 focus:bg-black focus:border-white" placeholder="ENTER ID">
+                    </div>
+                    <div class="space-y-1 group">
+                        <label class="text-[9px] uppercase text-gray-300 font-mono ml-1 group-focus-within:text-white transition">Password</label>
+                        <input type="password" id="login-pass" class="inst-input w-full text-sm md:text-base text-center tracking-widest bg-black/50 text-white border-gray-600 focus:bg-black focus:border-white" placeholder="••••••••">
+                    </div>
+                    
+                    <button onclick="attemptLogin()" class="btn-main w-full py-3 md:py-4 text-xs tracking-widest mt-4 bg-white text-black hover:bg-gray-200" style="border: none;">Authenticate</button>
+                    
+                    <div class="mt-8 flex justify-between items-center text-[10px] md:text-[11px]">
+                        <span onclick="toggleScreen('setup-screen')" class="cursor-pointer text-gray-300 hover:text-white transition border-b border-dotted border-gray-500 hover:border-white pb-0.5">Initialize Profile</span>
+                        <span onclick="toggleScreen('recovery-screen')" class="cursor-pointer text-gray-300 hover:text-white transition">Forgot Password?</span>
+                    </div>
+                    <p id="login-error" class="text-down text-[10px] text-center mt-4 font-mono hidden uppercase border border-down/20 bg-down/5 p-2 rounded-md animate-scale-in">Invalid Credentials</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="recovery-screen" class="relative z-10 w-full max-w-lg hidden animate-fade-in-up">
+            <div class="panel-glass p-6 md:p-10 text-white" style="background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2);">
+                <h2 class="text-sm font-bold mb-8 border-l-2 border-white pl-4 uppercase shadow-[0_0_10px_rgba(255,255,255,0.3)]">Account Recovery</h2>
+                <div class="space-y-5">
+                    <p class="text-[11px] text-gray-300 mb-2">Provide your details and the System Generated Key.</p>
+                    <input type="text" id="rec-user" class="inst-input w-full bg-black/50 text-white border-gray-600" placeholder="USER ID">
+                    <input type="email" id="rec-email" class="inst-input w-full bg-black/50 text-white border-gray-600" placeholder="REGISTERED EMAIL">
+                    <input type="password" id="rec-key" class="inst-input w-full border-blue-400/50 text-blue-100 bg-black/50" placeholder="SYSTEM GENERATED KEY">
+                    <div class="space-y-1 pt-4 border-t border-white/20">
+                        <label class="text-[9px] uppercase text-gray-400 font-mono">Set New Password</label>
+                        <input type="password" id="rec-new-pass" class="inst-input w-full bg-black/50 text-white border-gray-600" placeholder="NEW PASSWORD">
+                    </div>
+                    <div class="flex gap-4 pt-4">
+                        <button onclick="toggleScreen('login-screen')" class="btn-ghost w-1/3 py-3 border-gray-500 text-white">Cancel</button>
+                        <button onclick="attemptRecovery()" class="btn-main w-2/3 py-3 text-xs bg-white text-black" style="border: none;">Reset Access</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="setup-screen" class="relative z-10 w-full max-w-lg hidden animate-fade-in-up">
+            <div class="panel-glass p-6 md:p-10 text-white" style="background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2);">
+                <div id="setup-form-view">
+                    <div class="mb-6 md:mb-8 text-center">
+                        <h2 class="text-sm font-bold uppercase tracking-widest inline-block border-b border-white/30 pb-1">New Profile Setup</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                             <input type="text" id="setup-user" class="inst-input w-full bg-black/50 text-white border-gray-600" placeholder="USER ID">
+                             <input type="email" id="setup-email" class="inst-input w-full bg-black/50 text-white border-gray-600" placeholder="EMAIL ADDRESS">
+                        </div>
+                        <div class="space-y-1">
+                             <input type="password" id="setup-pass" class="inst-input w-full bg-black/50 text-white border-gray-600" placeholder="PASSWORD">
+                             <p class="text-[9px] text-gray-400 ml-1">* Min 8 chars, 1 Upper, 1 Special</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="setup-currency" class="inst-input w-full text-xs bg-black/50 text-white border-gray-600 h-full">
+                                <option value="€">EUR (€)</option>
+                                <option value="$">USD ($)</option>
+                                <option value="£">GBP (£)</option>
+                            </select>
+                            <input type="number" id="setup-capital" class="inst-input w-full text-xs bg-black/50 text-white border-gray-600" placeholder="INITIAL EQUITY">
+                        </div>
+                        <div class="space-y-1 mt-2">
+                            <label class="text-[9px] uppercase text-gray-400 font-mono ml-1">Language</label>
+                            <select id="setup-lang" class="inst-input w-full text-xs bg-black/50 text-white border-gray-600">
+                                <option value="it">Italiano</option>
+                                <option value="en">English</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-4 pt-6">
+                            <button onclick="toggleScreen('login-screen')" class="btn-ghost w-1/3 py-3 border-gray-500 text-white">Back</button>
+                            <button onclick="finalizeSetup()" class="btn-main w-2/3 py-3 text-xs bg-white text-black" style="border: none;">Generate Profile</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="setup-success-view" class="hidden text-center space-y-6 animate-scale-in">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto shadow-[0_0_25px_white]">
+                        <i class="fa-solid fa-check text-2xl text-black"></i>
+                    </div>
+                    <h2 class="text-xl font-bold">Profile Created</h2>
+                    <p class="text-xs text-gray-300 px-4">Save this secure recovery key now. <br><span class="text-white font-bold underline">It will not be shown again.</span></p>
+                    <div class="bg-black/40 p-5 rounded-lg border border-white/30 relative group">
+                        <div id="display-gen-key" class="font-mono text-xl font-bold tracking-wider select-all"></div>
+                    </div>
+                    <button onclick="toggleScreen('login-screen')" class="btn-main w-full py-4 text-xs mt-4 bg-white text-black" style="border:none;">I Have Saved The Key</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-content" class="hidden h-screen w-full flex flex-row overflow-hidden relative opacity-0 transition-opacity duration-1000">
+        
+        <nav class="w-16 md:w-56 flex-shrink-0 border-r border-dynamic bg-[var(--bg-body)] bg-opacity-90 flex flex-col justify-between py-6 transition-all duration-300 z-[60] backdrop-blur-xl shadow-[4px_0_24px_rgba(0,0,0,0.1)] overflow-y-auto custom-scroll">
+            <div class="space-y-8">
+                <div class="px-3 md:px-6 flex justify-center md:justify-start items-center hover:scale-105 transition duration-300 mt-2">
+                    <div class="w-10 h-10 flex items-center justify-center border border-dynamic bg-dynamic-hover rounded-lg shadow-[0_0_15px_var(--dyn-glow)] flex-shrink-0">
+                        <i class="fa-solid fa-book-journal-whills text-dynamic"></i>
+                    </div>
+                </div>
+
+                <div class="px-2 md:px-4 space-y-2" id="nav-links">
+                    <a href="#" id="nav-dashboard" onclick="switchView('dashboard')" class="flex items-center gap-4 p-3 rounded-lg transition-all duration-300 border border-dynamic bg-dynamic-hover shadow-[0_0_10px_var(--dyn-glow)] text-dynamic group hover:-translate-y-1">
+                        <i class="fa-solid fa-border-all text-lg w-6 text-center group-hover:drop-shadow-[0_0_8px_var(--text-main)] transition"></i>
+                        <span class="hidden md:block text-xs uppercase tracking-widest font-bold" data-i18n="nav_dash">Dashboard</span>
+                    </a>
+                    <a href="#" id="nav-stats" onclick="switchView('stats')" class="flex items-center gap-4 text-dynamic-muted hover:text-dynamic bg-transparent p-3 rounded-lg transition-all duration-300 border border-transparent group hover:bg-dynamic-hover hover:-translate-y-1">
+                        <i class="fa-solid fa-chart-line text-lg w-6 text-center group-hover:drop-shadow-[0_0_8px_var(--text-main)] transition"></i>
+                        <span class="hidden md:block text-xs uppercase tracking-widest font-bold" data-i18n="nav_stats">Stats</span>
+                    </a>
+                    <a href="#" id="nav-calendar" onclick="switchView('calendar')" class="flex items-center gap-4 text-dynamic-muted hover:text-dynamic bg-transparent p-3 rounded-lg transition-all duration-300 border border-transparent group hover:bg-dynamic-hover hover:-translate-y-1">
+                        <i class="fa-regular fa-calendar-days text-lg w-6 text-center group-hover:drop-shadow-[0_0_8px_var(--text-main)] transition"></i>
+                        <span class="hidden md:block text-xs uppercase tracking-widest font-bold" data-i18n="nav_cal">Calendar</span>
+                    </a>
+                    
+                    <a href="#" id="nav-calculator" onclick="switchView('calculator')" class="flex items-center gap-4 text-dynamic-muted hover:text-dynamic bg-transparent p-3 rounded-lg transition-all duration-300 border border-transparent group hover:bg-dynamic-hover hover:-translate-y-1">
+                        <i class="fa-solid fa-calculator text-lg w-6 text-center group-hover:drop-shadow-[0_0_8px_var(--text-main)] transition"></i>
+                        <span class="hidden md:block text-xs uppercase tracking-widest font-bold" data-i18n="nav_calc">Equity Calculator</span>
+                    </a>
+
+                    <a href="#" id="nav-news" onclick="switchView('news')" class="flex items-center gap-4 text-dynamic-muted hover:text-dynamic bg-transparent p-3 rounded-lg transition-all duration-300 border border-transparent group hover:bg-dynamic-hover hover:-translate-y-1">
+                        <i class="fa-solid fa-newspaper text-lg w-6 text-center group-hover:drop-shadow-[0_0_8px_var(--text-main)] transition"></i>
+                        <span class="hidden md:block text-xs uppercase tracking-widest font-bold" data-i18n="nav_news">News & Events</span>
+                    </a>
+
+                    <a href="#" id="nav-cot" onclick="switchView('cot')" class="flex items-center gap-4 text-dynamic-muted hover:text-dynamic bg-transparent p-3 rounded-lg transition-all duration-300 border border-transparent group hover:bg-dynamic-hover hover:-translate-y-1">
+                        <i class="fa-solid fa-building-columns text-lg w-6 text-center group-hover:drop-shadow-[0_0_8px_var(--text-main)] transition"></i>
+                        <span class="hidden md:block text-xs uppercase tracking-widest font-bold" data-i18n="nav_cot">COT Report</span>
+                    </a>
+                    <a href="#" id="nav-settings" onclick="switchView('settings')" class="flex items-center gap-4 text-dynamic-muted hover:text-dynamic bg-transparent p-3 rounded-lg transition-all duration-300 border border-transparent group hover:bg-dynamic-hover hover:-translate-y-1">
+                        <i class="fa-solid fa-gear text-lg w-6 text-center group-hover:drop-shadow-[0_0_8px_var(--text-main)] transition"></i>
+                        <span class="hidden md:block text-xs uppercase tracking-widest font-bold" data-i18n="nav_set">Setting</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="px-2 md:px-4 pb-4">
+                <a href="https://wa.me/393345415707" target="_blank" class="flex items-center gap-4 text-dynamic-muted hover:text-dynamic bg-transparent p-3 rounded-lg transition-all duration-300 border border-transparent group hover:bg-dynamic-hover hover:-translate-y-1 active:scale-95">
+                    <i class="fa-regular fa-circle-question text-lg w-6 text-center group-hover:drop-shadow-[0_0_8px_var(--text-main)] transition"></i>
+                    <span class="hidden md:block text-xs uppercase tracking-widest font-bold" data-i18n="nav_help">Help</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
+            
+            <header class="sticky top-0 z-40 bg-[var(--bg-body)] bg-opacity-80 border-b border-dynamic px-4 py-3 flex justify-between items-center backdrop-blur-md transition-colors duration-500">
+                <div class="flex items-center gap-4">
+                    <div class="leading-tight">
+                        <div class="font-bold text-base md:text-lg tracking-wide text-dynamic drop-shadow-sm">INTINI<span class="font-light text-dynamic-muted">JOURNALING</span></div>
+                        <div class="text-[9px] text-dynamic-muted font-mono tracking-widest">QUANTUM TERMINAL <span class="text-dynamic animate-pulse-slow ml-1 shadow-[0_0_5px_var(--text-main)]">●</span></div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4 text-xs font-mono">
+                    <div class="hidden md:flex gap-6 text-[10px] text-dynamic-muted uppercase tracking-wider font-bold mr-2">
+                        <span class="flex items-center"><i class="fa-solid fa-signal mr-2 text-dynamic"></i><span data-i18n="connected">Connected</span></span>
+                        <span class="flex items-center"><i class="fa-solid fa-lock mr-2 text-dynamic"></i><span data-i18n="secure">Encrypted</span></span>
+                    </div>
+                    
+                    <div class="hidden sm:flex flex-col gap-1 items-end mr-2">
+                        <div class="flex items-center gap-2 bg-dynamic-hover border border-dynamic px-2 py-1 rounded-full shadow-[0_0_5px_var(--dyn-glow)]">
+                            <span class="text-[8px] text-dynamic-muted uppercase tracking-widest mr-1 font-sans" data-i18n="borders">Borders:</span>
+                            <button onclick="setBorderTheme('border-white')" class="w-2.5 h-2.5 rounded-full bg-gray-400 hover:scale-150 transition-transform"></button>
+                            <button onclick="setBorderTheme('border-red')" class="w-2.5 h-2.5 rounded-full bg-[#ef4444] hover:scale-150 transition-transform"></button>
+                            <button onclick="setBorderTheme('border-blue')" class="w-2.5 h-2.5 rounded-full bg-[#0ea5e9] hover:scale-150 transition-transform"></button>
+                            <button onclick="setBorderTheme('border-fuchsia')" class="w-2.5 h-2.5 rounded-full bg-[#d946ef] hover:scale-150 transition-transform"></button>
+                            <button onclick="setBorderTheme('border-yellow')" class="w-2.5 h-2.5 rounded-full bg-[#eab308] hover:scale-150 transition-transform"></button>
+                            <button onclick="setBorderTheme('border-green')" class="w-2.5 h-2.5 rounded-full bg-[#10b981] hover:scale-150 transition-transform"></button>
+                        </div>
+                        <div class="flex items-center gap-2 bg-dynamic-hover border border-dynamic px-2 py-1 rounded-full shadow-[0_0_5px_var(--dyn-glow)]">
+                            <span class="text-[8px] text-dynamic-muted uppercase tracking-widest mr-1 font-sans" data-i18n="charts">Charts:</span>
+                            <button onclick="setChartTheme('chart-white')" class="w-2.5 h-2.5 rounded-full bg-gray-400 hover:scale-150 transition-transform"></button>
+                            <button onclick="setChartTheme('chart-red')" class="w-2.5 h-2.5 rounded-full bg-[#ef4444] hover:scale-150 transition-transform"></button>
+                            <button onclick="setChartTheme('chart-blue')" class="w-2.5 h-2.5 rounded-full bg-[#0ea5e9] hover:scale-150 transition-transform"></button>
+                            <button onclick="setChartTheme('chart-fuchsia')" class="w-2.5 h-2.5 rounded-full bg-[#d946ef] hover:scale-150 transition-transform"></button>
+                            <button onclick="setChartTheme('chart-yellow')" class="w-2.5 h-2.5 rounded-full bg-[#eab308] hover:scale-150 transition-transform"></button>
+                            <button onclick="setChartTheme('chart-green')" class="w-2.5 h-2.5 rounded-full bg-[#10b981] hover:scale-150 transition-transform"></button>
+                        </div>
+                    </div>
+                    
+                    <div class="hidden sm:block h-8 w-px bg-dynamic mx-1 border-r border-dynamic"></div>
+                    <div class="flex items-center gap-3">
+                        <span id="nav-user" class="uppercase text-dynamic font-bold hidden sm:inline tracking-wider">---</span>
+                        <button onclick="logout()" class="w-8 h-8 rounded-full border border-dynamic bg-dynamic-hover flex items-center justify-center hover:bg-[var(--text-main)] hover:text-[var(--bg-body)] transition-all duration-300 active:scale-90"><i class="fa-solid fa-power-off"></i></button>
+                    </div>
+                </div>
+            </header>
+
+            <div id="views-container" class="flex-grow p-3 md:p-4 lg:p-6 overflow-y-auto custom-scroll relative">
+
+                <div id="view-dashboard" class="max-w-[1800px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 animate-fade-in-up">
+
+                    <aside class="lg:col-span-3 space-y-4 md:space-y-6 flex flex-col h-full">
+                        
+                        <div class="panel-glass p-4 md:p-6 animate-fade-in-up delay-100 flex-shrink-0">
+                            <div class="flex justify-between items-center mb-5 border-b border-dynamic pb-3">
+                                <h2 class="text-[11px] font-bold text-dynamic uppercase tracking-[0.2em] flex items-center">
+                                    <span class="w-1.5 h-1.5 bg-dynamic rounded-full mr-2 shadow-[0_0_5px_var(--text-main)]" style="background-color: var(--text-main)"></span>
+                                    <span data-i18n="order_entry">Execution</span>
+                                </h2>
+                                <span class="text-[9px] text-dynamic-muted font-mono border border-dynamic px-1.5 rounded">LIVE</span>
+                            </div>
+
+                            <div class="bg-dynamic-hover border border-dynamic rounded-lg p-3 mb-5 relative overflow-hidden group transition-all">
+                                <div class="flex justify-between items-center mb-1.5">
+                                    <span class="text-[9px] uppercase text-dynamic-muted font-bold flex items-center gap-1.5"><i class="fa-solid fa-shield-halved opacity-50"></i> <span data-i18n="max_daily_loss">Daily Risk Limit</span></span>
+                                    <div class="flex items-center border border-dynamic rounded px-1.5 bg-[var(--input-bg)]">
+                                        <input type="number" id="max-daily-loss" step="0.1" class="w-10 h-5 p-0 text-center text-[10px] font-bold bg-transparent text-dynamic border-none focus:outline-none focus:ring-0" onchange="saveRiskLimit()" title="Set Max % Loss">
+                                        <span class="text-[9px] text-dynamic-muted ml-0.5">%</span>
+                                    </div>
+                                </div>
+                                <div class="h-1.5 w-full bg-[var(--chart-grid)] rounded-full overflow-hidden border border-dynamic relative">
+                                    <div id="daily-loss-bar" class="h-full bg-down w-0 transition-all duration-1000 relative shadow-[0_0_8px_#ef4444]">
+                                        <div class="absolute inset-0 bg-white/20 animate-pulse-slow"></div>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center mt-1.5">
+                                    <span id="daily-loss-text" class="text-[8px] font-mono text-dynamic-muted">0.00 / 0.00</span>
+                                    <span id="daily-loss-warn" class="text-[8px] font-bold text-down hidden animate-pulse uppercase tracking-wider">Limit Reached!</span>
+                                </div>
+                            </div>
+
+                            <form onsubmit="handleTrade(event)" class="space-y-4">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <input type="date" id="t-date" class="inst-input inst-input-sm text-[10px]">
+                                    <input type="time" id="t-time" class="inst-input inst-input-sm text-[10px]">
+                                </div>
+                                <input type="text" id="t-asset" data-i18n-ph="ph_symbol" placeholder="SYMBOL" class="inst-input inst-input-sm text-sm font-bold uppercase tracking-widest border-l-4 w-full" style="border-left-color: var(--text-main)" required>
+                                
+                                <div class="grid grid-cols-2 gap-3">
+                                    <select id="t-session" class="inst-input inst-input-sm text-[10px] text-center">
+                                        <option value="LDN">🇬🇧 LDN</option><option value="NY">🇺🇸 NY</option><option value="ASIA">🇯🇵 ASIA</option>
+                                    </select>
+                                    <select id="t-type" class="inst-input inst-input-sm text-[10px] text-center font-bold">
+                                        <option value="SCALP">⚡ SCALPING</option><option value="INTRA">📅 INTRADAY</option><option value="SWING">🌊 SWING</option>
+                                    </select>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <label class="cursor-pointer radio-box radio-long block hover:scale-105 transition">
+                                        <input type="radio" name="dir" value="LONG" class="hidden" id="dir-long" checked>
+                                        <div class="text-center py-3 border border-dynamic transition-all duration-300 rounded-lg">
+                                            <span class="text-xs font-bold tracking-widest">LONG</span>
+                                        </div>
+                                    </label>
+                                    <label class="cursor-pointer radio-box radio-short block hover:scale-105 transition">
+                                        <input type="radio" name="dir" value="SHORT" class="hidden" id="dir-short">
+                                        <div class="text-center py-3 border border-dynamic transition-all duration-300 rounded-lg">
+                                            <span class="text-xs font-bold tracking-widest">SHORT</span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-[9px] text-dynamic-muted font-bold" data-i18n="lots">LOTS</span>
+                                        <input type="number" step="0.01" id="t-lots" class="inst-input inst-input-sm w-full pt-6 text-sm font-mono">
+                                    </div>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-2.5 text-[9px] text-dynamic-muted font-bold">RISK%</span>
+                                        <input type="number" step="0.1" id="t-risk" class="inst-input inst-input-sm w-full pt-6 text-sm font-mono" oninput="calcAutoPnL()">
+                                    </div>
+                                </div>
+
+                                <div class="bg-dynamic-hover p-4 border border-dynamic space-y-3 rounded-lg transition-colors">
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div class="relative">
+                                            <span class="absolute left-2 top-2.5 text-[9px] text-dynamic-muted">R:R</span>
+                                            <input type="number" step="0.1" id="t-rr" class="inst-input inst-input-sm w-full pl-8 text-xs text-right" oninput="calcAutoPnL()">
+                                        </div>
+                                        <select id="t-grade" class="inst-input inst-input-sm text-[10px] text-center font-bold">
+                                            <option value="A">Grade A</option><option value="B">Grade B</option><option value="C">Grade C</option>
+                                        </select>
+                                    </div>
+                                    <select id="t-outcome" class="inst-input inst-input-sm w-full text-xs font-bold text-center" onchange="calcAutoPnL()">
+                                        <option value="" disabled selected data-i18n="outcome_sel">-- OUTCOME --</option>
+                                        <option value="TP" class="text-up" data-i18n="tp">TAKE PROFIT</option>
+                                        <option value="SL" class="text-down" data-i18n="sl">STOP LOSS</option>
+                                        <option value="BE" class="text-dynamic-muted" data-i18n="be">BREAK EVEN</option>
+                                    </select>
+                                    <div class="flex items-center justify-between border-t border-dynamic pt-3 mt-1">
+                                        <span class="text-[9px] uppercase text-dynamic-muted font-bold tracking-wider" data-i18n="proj_pnl">Projected P&L</span>
+                                        <input type="number" step="any" id="t-pnl" placeholder="0.00" class="inst-input inst-input-sm w-28 p-0 text-right text-base font-bold bg-transparent border-none focus:outline-none focus:ring-0 shadow-none text-dynamic">
+                                    </div>
+                                </div>
+
+                                <textarea id="t-notes" class="inst-input inst-input-sm w-full p-3 text-xs h-20 resize-none" data-i18n-ph="ph_notes" placeholder="Execution logic..."></textarea>
+                                
+                                <div class="flex items-center gap-2">
+                                    <label class="cursor-pointer flex-grow bg-dynamic-hover border border-dynamic p-2.5 rounded-lg text-center text-[10px] text-dynamic-muted hover:text-dynamic transition uppercase font-bold tracking-wider active:scale-95">
+                                        <i class="fa-solid fa-image mr-1.5 opacity-70"></i> <span id="file-name-display" data-i18n="attach_img">Attach Image</span>
+                                        <input type="file" id="t-image" class="hidden" accept="image/*" onchange="previewImage(event)">
+                                    </label>
+                                    <div id="image-preview-container" class="hidden w-10 h-10 rounded border border-dynamic overflow-hidden shrink-0 animate-scale-in">
+                                        <img id="image-preview" class="w-full h-full object-cover">
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn-main w-full py-3.5 text-[10px] tracking-[0.2em]" data-i18n="commit">COMMIT TRADE</button>
+                            </form>
+                        </div>
+
+                        <div class="panel-glass p-4 md:p-6 flex-grow flex flex-col justify-between min-h-[350px] animate-fade-in-up delay-200">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-dynamic mb-6 flex items-center justify-between border-b border-dynamic pb-2">
+                                <span><i class="fa-solid fa-chart-pie mr-2 text-dynamic"></i><span data-i18n="edge_metrics">Edge Metrics</span></span>
+                            </h3>
+                            
+                            <div class="space-y-5 flex-grow">
+                                <div class="group hover:translate-x-1 transition-transform">
+                                    <div class="flex justify-between items-end mb-2">
+                                        <span class="text-[9px] uppercase text-dynamic-muted tracking-wider" data-i18n="dom_session">Dominant Session</span>
+                                        <span id="best-session" class="text-base font-mono font-bold text-dynamic">-</span>
+                                    </div>
+                                    <div class="h-0.5 w-full bg-[var(--chart-grid)] rounded overflow-hidden">
+                                        <div class="h-full w-2/3 shadow-[0_0_8px_var(--dyn-chart)] transition-all duration-1000" style="background-color: var(--dyn-chart)"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="group hover:translate-x-1 transition-transform">
+                                    <div class="flex justify-between items-end mb-2">
+                                        <span class="text-[9px] uppercase text-dynamic-muted tracking-wider" data-i18n="top_inst">Top Instrument</span>
+                                        <span id="best-pair" class="text-base font-mono font-bold text-dynamic">-</span>
+                                    </div>
+                                    <div class="h-0.5 w-full bg-[var(--chart-grid)] rounded overflow-hidden">
+                                        <div class="h-full w-1/2 shadow-[0_0_8px_var(--dyn-chart)] transition-all duration-1000" style="background-color: var(--dyn-chart)"></div>
+                                    </div>
+                                </div>
+
+                                <div class="group hover:translate-x-1 transition-transform">
+                                    <div class="flex justify-between items-end mb-2">
+                                        <span class="text-[9px] uppercase text-dynamic-muted tracking-wider" data-i18n="best_dir">Best Direction</span>
+                                        <span id="best-dir" class="text-base font-mono font-bold text-dynamic">-</span>
+                                    </div>
+                                    <div class="h-0.5 w-full bg-[var(--chart-grid)] rounded overflow-hidden">
+                                        <div class="h-full w-2/3 shadow-[0_0_8px_var(--dyn-chart)] transition-all duration-1000" style="background-color: var(--dyn-chart)"></div>
+                                    </div>
+                                </div>
+
+                                <div class="group hover:translate-x-1 transition-transform">
+                                    <div class="flex justify-between items-end mb-2">
+                                        <span class="text-[9px] uppercase text-dynamic-muted tracking-wider" data-i18n="best_day">Most Profitable Day</span>
+                                        <span id="best-day" class="text-base font-mono font-bold text-dynamic">-</span>
+                                    </div>
+                                    <div class="h-0.5 w-full bg-[var(--chart-grid)] rounded overflow-hidden">
+                                        <div class="h-full w-3/4 shadow-[0_0_8px_var(--dyn-chart)] transition-all duration-1000" style="background-color: var(--dyn-chart)"></div>
+                                    </div>
+                                </div>
+
+                                <div class="group hover:translate-x-1 transition-transform">
+                                    <div class="flex justify-between items-end mb-2">
+                                        <span class="text-[9px] uppercase text-dynamic-muted tracking-wider" data-i18n="avg_rr">Avg Win R:R</span>
+                                        <span id="best-rr" class="text-base font-mono font-bold text-up">-</span>
+                                    </div>
+                                    <div class="h-0.5 w-full bg-[var(--chart-grid)] rounded overflow-hidden">
+                                        <div class="h-full bg-up w-3/4 shadow-[0_0_8px_#10b981] transition-all duration-1000"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-auto pt-4 border-t border-dynamic flex justify-between text-[9px] text-dynamic-muted font-mono">
+                                <span>V8.0 PRO</span>
+                                <span>LATENCY: 8ms</span>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <main class="lg:col-span-9 flex flex-col gap-4 md:gap-6 h-full">
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 animate-fade-in-up">
+                            <div class="panel-glass p-4 md:p-6 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group hover:-translate-y-2">
+                                <p class="text-[9px] text-dynamic-muted uppercase tracking-widest font-bold" data-i18n="equity">Total Equity</p>
+                                <h4 id="kpi-balance" class="text-xl md:text-3xl font-mono font-bold text-dynamic tracking-tight drop-shadow-md">---</h4>
+                            </div>
+                            <div class="panel-glass p-4 md:p-6 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group hover:-translate-y-2">
+                                <p class="text-[9px] text-dynamic-muted uppercase tracking-widest font-bold" data-i18n="strike">Strike Rate</p>
+                                <h4 id="kpi-wr" class="text-xl md:text-3xl font-mono font-bold text-dynamic tracking-tight">---</h4>
+                            </div>
+                            <div class="panel-glass p-4 md:p-6 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group hover:-translate-y-2">
+                                <p class="text-[9px] text-dynamic-muted uppercase tracking-widest font-bold" data-i18n="pf">Profit Factor</p>
+                                <h4 id="kpi-pf" class="text-xl md:text-3xl font-mono font-bold text-dynamic tracking-tight">---</h4>
+                            </div>
+                            <div class="panel-glass p-4 md:p-6 flex flex-col justify-between h-28 md:h-32 relative overflow-hidden group hover:-translate-y-2">
+                                <p class="text-[9px] text-dynamic-muted uppercase tracking-widest font-bold" data-i18n="execs">Total Executions</p>
+                                <h4 id="kpi-count" class="text-xl md:text-3xl font-mono font-bold text-dynamic tracking-tight">0</h4>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 animate-fade-in-up delay-100">
+                            <div class="panel-glass p-4 md:p-6 lg:col-span-2 h-[280px] md:h-[400px] xl:h-[450px] relative">
+                                <div class="absolute top-4 left-4 md:top-6 md:left-6 flex items-center gap-2 z-10">
+                                    <span class="w-2 h-2 rounded-full shadow-[0_0_5px_var(--dyn-chart)]" style="background-color: var(--dyn-chart)"></span>
+                                    <span class="text-[10px] uppercase font-bold text-dynamic tracking-widest" data-i18n="curve">Equity Growth Curve</span>
+                                </div>
+                                <div class="h-full w-full pt-10">
+                                    <canvas id="chartEquity"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="panel-glass p-4 md:p-6 h-[280px] md:h-[400px] xl:h-[450px] relative">
+                                <div class="absolute top-4 left-4 md:top-6 md:left-6 flex items-center gap-2 z-10">
+                                    <span class="w-2 h-2 rounded-full opacity-50" style="background-color: var(--dyn-chart)"></span>
+                                    <span class="text-[10px] uppercase font-bold text-dynamic tracking-widest" data-i18n="dist">Net PnL Distribution</span>
+                                </div>
+                                <div class="h-full w-full pt-10">
+                                    <canvas id="chartDistribution"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 md:gap-6 animate-fade-in-up delay-200">
+                            
+                            <div class="panel-glass flex flex-col h-[600px] xl:col-span-2">
+                                <div class="p-4 border-b border-dynamic flex justify-between items-center bg-dynamic-hover">
+                                    <h3 class="text-[10px] font-bold uppercase tracking-widest text-dynamic ml-2 flex items-center">
+                                        <i class="fa-solid fa-list-ul mr-2 opacity-50"></i><span data-i18n="ledger">Master Ledger</span>
+                                    </h3>
+                                    <button onclick="exportCSV()" class="btn-ghost px-4 py-2 text-[10px] active:scale-90"><i class="fa-solid fa-download mr-1"></i> CSV EXPORT</button>
+                                </div>
+                                
+                                <div class="overflow-x-auto overflow-y-auto flex-grow custom-scroll bg-[var(--bg-body)] bg-opacity-30 h-full rounded-b-xl">
+                                    <table class="w-full text-left border-collapse whitespace-nowrap">
+                                        <thead class="sticky top-0 bg-[var(--panel-bg)] backdrop-blur-md text-[9px] text-dynamic-muted uppercase font-bold tracking-wider z-10 shadow-sm border-b border-dynamic">
+                                            <tr>
+                                                <th class="p-4 pl-6" data-i18n="th_time">Timestamp</th>
+                                                <th class="p-4" data-i18n="th_inst">Instrument</th>
+                                                <th class="p-4" data-i18n="th_dir">Direction</th>
+                                                <th class="p-4" data-i18n="th_size">Size (Lots)</th>
+                                                <th class="p-4">R:R</th>
+                                                <th class="p-4">Risk %</th>
+                                                <th class="p-4 text-right pr-6" data-i18n="th_pnl">Net P&L</th>
+                                                <th class="p-4 text-center">Opt.</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="trade-body" class="font-mono text-xs text-dynamic-muted divide-y divide-dynamic">
+                                        </tbody>
+                                    </table>
+                                    
+                                    <div id="empty-state" class="flex flex-col items-center justify-center h-64 text-dynamic-muted hidden opacity-50">
+                                        <i class="fa-solid fa-box-open text-5xl mb-4"></i>
+                                        <span class="text-[10px] uppercase tracking-widest" data-i18n="no_rec">No Executions Recorded</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-4 md:gap-6 xl:col-span-1 h-[600px]">
+                                
+                                <div class="panel-glass flex flex-col group hover:-translate-y-1 transition-transform flex-shrink-0">
+                                    <div class="p-4 border-b border-dynamic flex justify-between items-center bg-dynamic-hover rounded-t-xl">
+                                        <h3 class="text-[10px] font-bold uppercase tracking-widest text-dynamic ml-2 flex items-center">
+                                            <i class="fa-regular fa-calendar-days mr-2 opacity-50"></i><span data-i18n="calendar">Trading Calendar</span>
+                                        </h3>
+                                        <div class="flex items-center gap-2">
+                                            <div class="flex items-center gap-1.5 mr-2">
+                                                <button onclick="changeMonth(-1)" class="text-dynamic-muted hover:text-dynamic transition active:scale-90"><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+                                                <span id="calendar-month-year" class="text-[9px] font-bold text-dynamic tracking-widest uppercase font-mono w-20 text-center">---</span>
+                                                <button onclick="changeMonth(1)" class="text-dynamic-muted hover:text-dynamic transition active:scale-90"><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                                            </div>
+                                            <button onclick="switchView('calendar')" class="w-6 h-6 flex justify-center items-center rounded border border-dynamic text-dynamic hover:bg-[var(--text-main)] hover:text-[var(--bg-body)] transition active:scale-90" title="Expand Fullscreen">
+                                                <i class="fa-solid fa-expand text-[10px]"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="p-3 md:p-4 bg-[var(--bg-body)] bg-opacity-30 rounded-b-xl">
+                                        <div class="grid grid-cols-7 gap-1 md:gap-1.5 mb-2 text-center text-[8px] md:text-[9px] text-dynamic-muted uppercase tracking-widest font-bold">
+                                            <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                                        </div>
+                                        <div id="calendar-grid" class="grid grid-cols-7 gap-1 md:gap-1.5 w-full">
+                                            </div>
+                                    </div>
+                                </div>
+
+                                <div class="panel-glass flex flex-col flex-grow relative group hover:-translate-y-1 transition-transform overflow-hidden">
+                                    <div class="p-4 border-b border-dynamic flex justify-between items-center bg-dynamic-hover rounded-t-xl">
+                                        <h3 class="text-[10px] font-bold uppercase tracking-widest text-dynamic ml-2 flex items-center">
+                                            <i class="fa-solid fa-spider mr-2 opacity-50"></i><span data-i18n="perf_matrix">Performance Matrix</span>
+                                        </h3>
+                                    </div>
+                                    <div class="flex-grow w-full h-full p-4 pb-6 relative flex items-center justify-center bg-[var(--bg-body)] bg-opacity-30 rounded-b-xl">
+                                        <canvas id="chartRadarDash"></canvas>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </main>
+                </div> <div id="view-stats" class="hidden max-w-[1800px] mx-auto animate-fade-in-up flex-col gap-4 md:gap-6 pb-10 w-full">
+                    <div class="flex justify-between items-center border-b border-dynamic pb-4">
+                        <h2 class="text-xl font-bold text-dynamic uppercase tracking-widest flex items-center">
+                            <i class="fa-solid fa-flask text-dynamic mr-4 opacity-80"></i> Advanced Statistics Lab
+                        </h2>
+                    </div>
+
+                    <h3 class="text-xs text-dynamic-muted font-bold tracking-widest uppercase mt-4 border-l-2 pl-2 border-dynamic">1. Edge & Risk Analysis</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
+                        <div class="panel-glass p-5 md:col-span-2 h-[300px] flex flex-col hover:-translate-y-1 transition">
+                            <h4 class="text-[10px] uppercase tracking-widest text-dynamic font-bold mb-4 flex justify-between">
+                                <span>R-Multiples Distribution</span> <i class="fa-solid fa-chart-simple opacity-50"></i>
+                            </h4>
+                            <div class="flex-grow relative"><canvas id="chartRMultiples"></canvas></div>
+                        </div>
+                        
+                        <div class="panel-glass p-5 flex flex-col justify-center items-center text-center group hover:scale-105 transition-transform duration-300">
+                            <i class="fa-solid fa-scale-balanced text-4xl mb-4 opacity-30 text-dynamic transition-opacity group-hover:opacity-100"></i>
+                            <p class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold mb-2">Expected Value (EV)</p>
+                            <h4 id="stat-ev" class="text-4xl font-mono font-bold text-dynamic drop-shadow-lg">0.00</h4>
+                            <p class="text-[9px] text-dynamic-muted mt-2">Avg Return per Trade</p>
+                        </div>
+
+                        <div class="panel-glass p-5 h-[300px] flex flex-col hover:-translate-y-1 transition md:col-span-1 md:col-start-4 md:row-span-2 relative">
+                            <h4 class="text-[10px] uppercase tracking-widest text-dynamic font-bold mb-4 flex justify-between">
+                                <span>MFE vs MAE (The Holy Grail)</span> <i class="fa-solid fa-bullseye opacity-50"></i>
+                            </h4>
+                            <div class="flex-grow relative"><canvas id="chartMfeMae"></canvas></div>
+                            <p class="text-[8px] text-center text-dynamic-muted mt-2 leading-tight">Y: Max Favorable Excursion<br>X: Max Adverse Excursion</p>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xs text-dynamic-muted font-bold tracking-widest uppercase mt-4 border-l-2 pl-2 border-dynamic">2. Time Analysis</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                        
+                        <div class="panel-glass p-5 h-[300px] flex flex-col md:col-span-1 hover:-translate-y-1 transition">
+                            <h4 class="text-[10px] uppercase tracking-widest text-dynamic font-bold mb-4 flex justify-between">
+                                <span>Holding Time vs PnL</span> <i class="fa-regular fa-hourglass-half opacity-50"></i>
+                            </h4>
+                            <div class="flex-grow relative"><canvas id="chartHoldingTime"></canvas></div>
+                        </div>
+
+                        <div class="panel-glass p-5 h-[300px] flex flex-col md:col-span-2 hover:-translate-y-1 transition">
+                            <h4 class="text-[10px] uppercase tracking-widest text-dynamic font-bold mb-4 flex justify-between">
+                                <span>Profitability Heatmap (Day vs Session)</span> <i class="fa-solid fa-fire opacity-50"></i>
+                            </h4>
+                            <div class="flex-grow flex flex-col">
+                                <div class="grid grid-cols-4 gap-1 text-[9px] text-center text-dynamic-muted font-bold uppercase mb-1">
+                                    <div></div><div>Morning (LDN)</div><div>Afternoon (NY)</div><div>Night (ASIA)</div>
+                                </div>
+                                <div id="heatmap-container" class="flex-grow grid grid-cols-4 grid-rows-5 gap-1 font-mono text-[9px] text-dynamic">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xs text-dynamic-muted font-bold tracking-widest uppercase mt-4 border-l-2 pl-2 border-dynamic">3. Efficiency & Portfolio Stability</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                        
+                        <div class="panel-glass p-5 h-[450px] flex flex-col hover:-translate-y-1 transition">
+                            <h4 class="text-[10px] uppercase tracking-widest text-dynamic font-bold mb-4 flex justify-between">
+                                <span>Execution Efficiency</span> <i class="fa-solid fa-crosshairs opacity-50"></i>
+                            </h4>
+                            <div class="flex-grow relative flex items-center justify-center"><canvas id="chartEfficiency"></canvas></div>
+                        </div>
+
+                        <div class="panel-glass p-5 lg:col-span-2 h-[450px] flex flex-col hover:-translate-y-1 transition">
+                            <h4 class="text-[10px] uppercase tracking-widest text-dynamic font-bold mb-4 flex justify-between">
+                                <span>Equity Curve & Underwater Drawdown</span> <i class="fa-solid fa-water opacity-50"></i>
+                            </h4>
+                            <div class="flex-grow relative"><canvas id="chartUnderwater"></canvas></div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8 mt-12 mb-8">
+                        <div class="panel-glass p-8 text-center flex flex-col justify-center items-center hover:scale-105 transition-transform">
+                            <p class="text-[11px] text-dynamic-muted uppercase tracking-widest font-bold mb-4">Profit Factor</p>
+                            <div class="relative w-32 h-16 overflow-hidden mb-4">
+                                <canvas id="gaugePF"></canvas>
+                                <div id="gaugePF-text" class="absolute bottom-0 w-full text-center text-3xl font-bold font-mono text-dynamic drop-shadow-md">--</div>
+                            </div>
+                            <p class="text-[9px] text-dynamic-muted">Gross Win / Gross Loss</p>
+                        </div>
+                        <div class="panel-glass p-8 text-center flex flex-col justify-center items-center hover:scale-105 transition-transform">
+                            <p class="text-[11px] text-dynamic-muted uppercase tracking-widest font-bold mb-4">Sharpe Ratio</p>
+                            <div class="relative w-32 h-16 overflow-hidden mb-4">
+                                <canvas id="gaugeSharpe"></canvas>
+                                <div id="gaugeSharpe-text" class="absolute bottom-0 w-full text-center text-3xl font-bold font-mono text-dynamic drop-shadow-md">--</div>
+                            </div>
+                            <p class="text-[9px] text-dynamic-muted">Risk-Adjusted Return</p>
+                        </div>
+                        <div class="panel-glass p-8 text-center flex flex-col justify-center items-center hover:scale-105 transition-transform">
+                            <p class="text-[11px] text-dynamic-muted uppercase tracking-widest font-bold mb-4">Gross Profit</p>
+                            <h4 id="stat-gross-win" class="text-4xl font-mono font-bold text-up drop-shadow-[0_0_5px_rgba(16,185,129,0.5)]">0.00</h4>
+                        </div>
+                        <div class="panel-glass p-8 text-center flex flex-col justify-center items-center hover:scale-105 transition-transform">
+                            <p class="text-[11px] text-dynamic-muted uppercase tracking-widest font-bold mb-4">Gross Loss</p>
+                            <h4 id="stat-gross-loss" class="text-4xl font-mono font-bold text-down drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]">0.00</h4>
+                        </div>
+                    </div>
+
+                </div> <div id="view-calendar" class="hidden max-w-7xl mx-auto w-full flex-col animate-fade-in-up h-full pb-10">
+                    <div class="flex justify-between items-center mb-6 pb-4 border-b border-dynamic">
+                        <h2 class="text-xl md:text-2xl font-bold text-dynamic uppercase tracking-widest flex items-center drop-shadow-[0_0_10px_var(--text-main)]">
+                            <i class="fa-regular fa-calendar-days mr-4 opacity-80"></i> 
+                            <span data-i18n="master_calendar">Master Calendar View</span>
+                        </h2>
+                        <div class="flex items-center gap-6">
+                            <div class="flex items-center gap-2 bg-dynamic-hover px-4 py-2 rounded-lg border border-dynamic">
+                                <button onclick="changeMonth(-1)" class="text-dynamic-muted hover:text-dynamic transition w-8 h-8 flex justify-center items-center active:scale-90"><i class="fa-solid fa-chevron-left"></i></button>
+                                <span id="modal-month-year" class="text-sm font-bold text-dynamic tracking-widest uppercase font-mono w-32 text-center">---</span>
+                                <button onclick="changeMonth(1)" class="text-dynamic-muted hover:text-dynamic transition w-8 h-8 flex justify-center items-center active:scale-90"><i class="fa-solid fa-chevron-right"></i></button>
+                            </div>
+                            <button onclick="switchView('dashboard')" class="w-10 h-10 rounded-full border border-dynamic bg-dynamic-hover text-dynamic hover:bg-[var(--text-main)] hover:text-[var(--bg-body)] transition flex justify-center items-center shadow-[0_0_15px_var(--dyn-glow)] active:scale-90" title="Close">
+                                <i class="fa-solid fa-xmark text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-7 gap-2 md:gap-4 mb-3 text-center text-xs text-dynamic-muted uppercase tracking-widest font-bold">
+                        <div>Sunday</div><div>Monday</div><div>Tuesday</div><div>Wednesday</div><div>Thursday</div><div>Friday</div><div>Saturday</div>
+                    </div>
+                    
+                    <div id="modal-calendar-grid" class="grid grid-cols-7 gap-2 md:gap-4 flex-grow auto-rows-[minmax(100px,1fr)]">
+                        </div>
+                </div> <div id="view-calculator" class="hidden max-w-[1800px] mx-auto animate-fade-in-up flex-col gap-6 w-full h-full pb-10">
+                    <div class="flex justify-between items-center border-b border-dynamic pb-4">
+                        <h2 class="text-xl font-bold text-dynamic uppercase tracking-widest flex items-center">
+                            <i class="fa-solid fa-calculator text-dynamic mr-4 opacity-80"></i> Monte Carlo Equity Calculator
+                        </h2>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 md:gap-6 flex-grow">
+                        <div class="panel-glass p-6 flex flex-col gap-4 lg:col-span-1">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-dynamic mb-2 border-b border-dynamic pb-2">Simulation Parameters</h3>
+                            
+                            <div>
+                                <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">Start Equity</label>
+                                <input type="number" id="sim-eq" class="inst-input w-full mt-1" value="10000">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">Win Probability (%)</label>
+                                <input type="number" id="sim-win" class="inst-input w-full mt-1" value="50">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">Win/Loss Relation (Reward:1)</label>
+                                <input type="number" step="0.1" id="sim-rr" class="inst-input w-full mt-1" value="2.0">
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">No. Trades</label>
+                                    <input type="number" id="sim-trades" class="inst-input w-full mt-1" value="100">
+                                </div>
+                                <div>
+                                    <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">No. Lines</label>
+                                    <input type="number" id="sim-lines" class="inst-input w-full mt-1" value="20">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">Risk per Trade (%)</label>
+                                <input type="number" step="0.1" id="sim-risk" class="inst-input w-full mt-1" value="1.0">
+                            </div>
+
+                            <button onclick="runSimulation()" class="btn-main w-full py-4 mt-auto">Run Simulation</button>
+                        </div>
+
+                        <div class="panel-glass p-6 flex flex-col lg:col-span-3 min-h-[500px]">
+                            <div class="grid grid-cols-4 gap-4 mb-6">
+                                <div class="bg-dynamic-hover border border-dynamic p-4 rounded-lg text-center">
+                                    <p class="text-[9px] text-dynamic-muted uppercase font-bold">Max Equity</p>
+                                    <h4 id="sim-max" class="text-xl font-mono font-bold text-up">0.00</h4>
+                                </div>
+                                <div class="bg-dynamic-hover border border-dynamic p-4 rounded-lg text-center">
+                                    <p class="text-[9px] text-dynamic-muted uppercase font-bold">Min Equity</p>
+                                    <h4 id="sim-min" class="text-xl font-mono font-bold text-down">0.00</h4>
+                                </div>
+                                <div class="bg-dynamic-hover border border-dynamic p-4 rounded-lg text-center">
+                                    <p class="text-[9px] text-dynamic-muted uppercase font-bold">Avg Equity</p>
+                                    <h4 id="sim-avg" class="text-xl font-mono font-bold text-dynamic">0.00</h4>
+                                </div>
+                                <div class="bg-dynamic-hover border border-dynamic p-4 rounded-lg text-center">
+                                    <p class="text-[9px] text-dynamic-muted uppercase font-bold">Ruin Prob (-90%)</p>
+                                    <h4 id="sim-ruin" class="text-xl font-mono font-bold text-dynamic">0.0%</h4>
+                                </div>
+                            </div>
+                            <div class="flex-grow w-full relative">
+                                <canvas id="chartSimulator"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-news" class="hidden max-w-[1800px] mx-auto animate-fade-in-up flex-col gap-6 w-full h-full pb-10">
+                    <div class="flex justify-between items-center border-b border-dynamic pb-4">
+                        <h2 class="text-xl font-bold text-dynamic uppercase tracking-widest flex items-center">
+                            <i class="fa-solid fa-newspaper text-dynamic mr-4 opacity-80"></i> News & Economic Calendar
+                        </h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 flex-grow">
+                        <div class="panel-glass p-4 md:p-6 flex flex-col h-[700px]">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-dynamic mb-4 border-b border-dynamic pb-2 flex justify-between items-center">
+                                <span>Economic Calendar</span> <i class="fa-solid fa-calendar opacity-50"></i>
+                            </h3>
+                            <div class="flex-grow w-full rounded-lg overflow-hidden border border-dynamic relative">
+                                <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
+                                  <div class="tradingview-widget-container__widget" style="height: 100%; width: 100%;"></div>
+                                  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+                                  {
+                                  "colorTheme": "dark",
+                                  "isTransparent": true,
+                                  "width": "100%",
+                                  "height": "100%",
+                                  "locale": "it",
+                                  "importanceFilter": "-1,0,1",
+                                  "currencyFilter": "USD,EUR,GBP,JPY,AUD,CAD,CHF,NZD"
+                                  }
+                                  </script>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-glass p-4 md:p-6 flex flex-col h-[700px]">
+                            <h3 class="text-xs font-bold uppercase tracking-widest text-dynamic mb-4 border-b border-dynamic pb-2 flex justify-between items-center">
+                                <span>Market News Timeline</span> <i class="fa-solid fa-bolt opacity-50"></i>
+                            </h3>
+                            <div class="flex-grow w-full rounded-lg overflow-hidden border border-dynamic relative">
+                                <div class="tradingview-widget-container" style="height: 100%; width: 100%;">
+                                  <div class="tradingview-widget-container__widget" style="height: 100%; width: 100%;"></div>
+                                  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+                                  {
+                                  "feedMode": "all_symbols",
+                                  "colorTheme": "dark",
+                                  "isTransparent": true,
+                                  "displayMode": "regular",
+                                  "width": "100%",
+                                  "height": "100%",
+                                  "locale": "it"
+                                  }
+                                  </script>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-cot" class="hidden max-w-[1800px] mx-auto animate-fade-in-up flex-col gap-6 w-full h-full pb-10">
+                    <div class="flex justify-between items-center border-b border-dynamic pb-4">
+                        <h2 class="text-xl font-bold text-dynamic uppercase tracking-widest flex items-center">
+                            <i class="fa-solid fa-building-columns text-dynamic mr-4 opacity-80"></i> Commitments of Traders (COT)
+                        </h2>
+                        <a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" class="btn-ghost px-4 py-2 text-[10px] flex items-center gap-2 hover:text-white hover:border-white">
+                            <i class="fa-solid fa-download"></i> DOWNLOAD RAW DATA (CFTC)
+                        </a>
+                    </div>
+                    
+                    <div class="panel-glass p-4 md:p-6 flex flex-col flex-grow min-h-[700px]">
+                        <h3 class="text-xs font-bold uppercase tracking-widest text-dynamic mb-4 border-b border-dynamic pb-2 flex justify-between items-center">
+                            <span>Interactive COT Chart (Auto-Updating)</span>
+                            <span class="text-[9px] text-dynamic-muted bg-dynamic-hover px-2 py-1 rounded">Source: CFTC via TradingView</span>
+                        </h3>
+                        <div class="flex-grow w-full rounded-lg overflow-hidden border border-dynamic relative bg-black/50">
+                            <div class="tradingview-widget-container" style="height:100%;width:100%">
+                              <div id="tradingview_cot" style="height:calc(100% - 32px);width:100%"></div>
+                              <script type="text/javascript">
+                              new TradingView.widget(
+                              {
+                              "autosize": true,
+                              "symbol": "CME:6E1!", 
+                              "interval": "W", 
+                              "timezone": "Etc/UTC",
+                              "theme": "dark",
+                              "style": "1",
+                              "locale": "it",
+                              "enable_publishing": false,
+                              "backgroundColor": "rgba(0, 0, 0, 0)",
+                              "gridColor": "rgba(255, 255, 255, 0.05)",
+                              "hide_top_toolbar": false,
+                              "hide_legend": false,
+                              "save_image": false,
+                              "container_id": "tradingview_cot",
+                              "studies": [
+                                "CommitmentOfTraders@tv-basicstudies"
+                              ]
+                              }
+                              );
+                              </script>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="view-settings" class="hidden max-w-3xl mx-auto animate-fade-in-up flex-col gap-6 w-full">
+                    <div class="flex justify-between items-center border-b border-dynamic pb-4 mb-2">
+                        <h2 class="text-xl font-bold text-dynamic uppercase tracking-widest flex items-center">
+                            <i class="fa-solid fa-gear mr-4 opacity-80"></i> System Settings
+                        </h2>
+                    </div>
+                    
+                    <div class="panel-glass p-6 md:p-8 space-y-8">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">Operator ID</label>
+                                <input type="text" id="set-user" class="inst-input w-full mt-2 bg-dynamic-hover text-dynamic-muted cursor-not-allowed" disabled>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">Registered Email</label>
+                                <input type="text" id="set-email" class="inst-input w-full mt-2 bg-dynamic-hover text-dynamic-muted cursor-not-allowed" disabled>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-dynamic">
+                            <div>
+                                <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">Currency Interface</label>
+                                <select id="set-currency" class="inst-input w-full mt-2 bg-[var(--input-bg)] text-dynamic cursor-pointer hover:border-[var(--text-main)]" onchange="changeCurrencySetting()">
+                                    <option value="€">EUR (€)</option>
+                                    <option value="$">USD ($)</option>
+                                    <option value="£">GBP (£)</option>
+                                </select>
+                                <p class="text-[8px] text-dynamic-muted mt-2 uppercase">Changes symbol across all dashboards.</p>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-dynamic-muted uppercase tracking-widest font-bold">Language</label>
+                                <select id="set-lang" class="inst-input w-full mt-2 bg-[var(--input-bg)] text-dynamic cursor-pointer hover:border-[var(--text-main)]" onchange="changeLanguageSetting()">
+                                    <option value="en">English</option>
+                                    <option value="it">Italiano</option>
+                                    <option value="fr">Français</option>
+                                    <option value="de">Deutsch</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="pt-6 border-t border-dynamic flex items-center justify-between">
+                            <div>
+                                <h3 class="text-xs font-bold uppercase tracking-widest text-dynamic">Appearance</h3>
+                                <p class="text-[10px] text-dynamic-muted uppercase mt-1">Switch between Dark and Light Mode.</p>
+                            </div>
+                            <div class="relative inline-block w-14 h-8 align-middle select-none transition duration-200 ease-in">
+                                <input type="checkbox" name="toggle" id="theme-toggle" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer mt-1 ml-1 border-gray-600" onchange="toggleLightMode()"/>
+                                <label for="theme-toggle" class="toggle-label block overflow-hidden h-8 rounded-full bg-gray-600 cursor-pointer shadow-inner"></label>
+                            </div>
+                        </div>
+
+                        <div class="pt-8 border-t border-dynamic">
+                            <h3 class="text-xs text-down font-bold uppercase tracking-widest mb-4">Danger Zone</h3>
+                            <button onclick="wipeData()" class="btn-ghost w-full py-4 border-down/50 text-down hover:bg-down/10 hover:border-down hover:text-down tracking-widest font-bold active:scale-95 transition-all">WIPE ALL TRADE DATA</button>
+                            <p class="text-[10px] text-dynamic-muted text-center mt-3 uppercase">This action is irreversible and deletes all recorded executions.</p>
+                        </div>
+                    </div>
+                </div> </div>
+        </div>
+    </div>
+
+    <div id="image-modal" class="fixed inset-0 z-[110] hidden bg-black/95 backdrop-blur-xl p-4 md:p-8 flex-col items-center justify-center animate-fade-in-up">
+        <button onclick="closeImageModal()" class="absolute top-6 right-6 md:top-10 md:right-10 w-10 h-10 rounded-full border border-white/20 bg-white/10 text-white hover:bg-white hover:text-black transition flex justify-center items-center shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-90">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+        <img id="modal-image-display" class="max-w-[90vw] max-h-[85vh] object-contain border-2 border-white/10 rounded-xl shadow-[0_0_30px_rgba(255,255,255,0.15)] bg-black/50">
+    </div>
+
+    <script>
+        // --- TRANSLATIONS ---
+        const translations = {
+            en: {
+                connected: "Connected", secure: "Encrypted", order_entry: "Execution", ph_symbol: "SYMBOL",
+                lots: "LOTS", outcome_sel: "-- OUTCOME --", tp: "TAKE PROFIT", sl: "STOP LOSS", be: "BREAK EVEN",
+                proj_pnl: "Projected P&L", ph_notes: "Execution logic...", commit: "COMMIT TRADE", attach_img: "Attach Image",
+                edge_metrics: "Edge Metrics", dom_session: "Dominant Session", top_inst: "Top Instrument", avg_rr: "Avg Win R:R",
+                best_dir: "Best Direction", best_day: "Most Profitable Day", perf_matrix: "Performance Matrix",
+                nav_dash: "Dashboard", nav_stats: "Stats", nav_cal: "Calendar", nav_calc: "Equity Calculator", nav_news: "News & Events", nav_cot: "COT Report", nav_set: "Settings", nav_help: "Help",
+                equity: "Total Equity", strike: "Strike Rate", pf: "Profit Factor", execs: "Total Executions",
+                curve: "Equity Growth Curve", dist: "Net PnL Distribution", ledger: "Master Ledger",
+                th_time: "Timestamp", th_inst: "Instrument", th_dir: "Direction", th_size: "Size (Lots)", th_pnl: "Net P&L", no_rec: "No Executions Recorded",
+                calendar: "Trading Calendar", master_calendar: "Master Calendar View", max_daily_loss: "Daily Risk Limit",
+                borders: "Borders:", charts: "Charts:"
+            },
+            it: {
+                connected: "Connesso", secure: "Criptato", order_entry: "Nuovo Ordine", ph_symbol: "SIMBOLO",
+                lots: "LOTTI", outcome_sel: "-- ESITO --", tp: "TAKE PROFIT", sl: "STOP LOSS", be: "PAREGGIO",
+                proj_pnl: "P&L Stimato", ph_notes: "Logica trade...", commit: "ESEGUI TRADE", attach_img: "Allega Immagine",
+                edge_metrics: "Metriche Edge", dom_session: "Sessione Dominante", top_inst: "Miglior Asset", avg_rr: "R:R Medio Vincente",
+                best_dir: "Direzione Migliore", best_day: "Giorno Più Profittevole", perf_matrix: "Matrice Performance",
+                nav_dash: "Dashboard", nav_stats: "Statistiche", nav_cal: "Calendario", nav_calc: "Simulatore", nav_news: "Notizie & Eventi", nav_cot: "COT Report", nav_set: "Impostazioni", nav_help: "Supporto",
+                equity: "Capitale Totale", strike: "Win Rate", pf: "Profit Factor", execs: "Esecuzioni Totali",
+                curve: "Curva del Capitale", dist: "Distribuzione PnL", ledger: "Registro Operazioni",
+                th_time: "Data/Ora", th_inst: "Strumento", th_dir: "Direzione", th_size: "Dim. (Lotti)", th_pnl: "P&L Netto", no_rec: "Nessuna Operazione",
+                calendar: "Calendario Trading", master_calendar: "Calendario Master", max_daily_loss: "Limite Rischio Giorn.",
+                borders: "Bordi:", charts: "Grafici:"
+            },
+            fr: {
+                connected: "Connecté", secure: "Chiffré", order_entry: "Saisie d'Ordre", ph_symbol: "SYMBOLE",
+                lots: "LOTS", outcome_sel: "-- RÉSULTAT --", tp: "TAKE PROFIT", sl: "STOP LOSS", be: "POINT MORT",
+                proj_pnl: "P&L Projeté", ph_notes: "Logique...", commit: "VALIDER TRADE", attach_img: "Joindre Image",
+                edge_metrics: "Métriques", dom_session: "Session Dominante", top_inst: "Meilleur Inst.", avg_rr: "R:R Moyen",
+                best_dir: "Meilleure Direction", best_day: "Jour Le Plus Rentable", perf_matrix: "Matrice de Performance",
+                nav_dash: "Tableau", nav_stats: "Stats", nav_cal: "Calendrier", nav_calc: "Simulateur", nav_news: "Actualités", nav_cot: "COT Report", nav_set: "Paramètres", nav_help: "Aide",
+                equity: "Capital Total", strike: "Taux Réussite", pf: "Facteur Profit", execs: "Total Exécutions",
+                curve: "Croissance Capital", dist: "Distribution PnL", ledger: "Grand Livre",
+                th_time: "Horodatage", th_inst: "Instrument", th_dir: "Direction", th_size: "Taille (Lots)", th_pnl: "P&L Net", no_rec: "Aucune Donnée",
+                calendar: "Calendrier Trading", master_calendar: "Calendrier Principal", max_daily_loss: "Limite Perte Jour",
+                borders: "Bords:", charts: "Graphiques:"
+            },
+            de: {
+                connected: "Verbunden", secure: "Verschlüsselt", order_entry: "Auftragserfassung", ph_symbol: "SYMBOL",
+                lots: "LOTS", outcome_sel: "-- ERGEBNIS --", tp: "TAKE PROFIT", sl: "STOP LOSS", be: "BREAK EVEN",
+                proj_pnl: "Proj. P&L", ph_notes: "Logik...", commit: "TRADE AUSFÜHREN", attach_img: "Bild Anhängen",
+                edge_metrics: "Vorteilsmetriken", dom_session: "Dom. Sitzung", top_inst: "Top Instrument", avg_rr: "Durchschn. R:R",
+                best_dir: "Beste Richtung", best_day: "Profitabelster Tag", perf_matrix: "Leistungsmatrix",
+                nav_dash: "Dashboard", nav_stats: "Statistiken", nav_cal: "Kalender", nav_calc: "Simulator", nav_news: "Nachrichten", nav_cot: "COT Report", nav_set: "Einstellungen", nav_help: "Hilfe",
+                equity: "Gesamtkapital", strike: "Trefferquote", pf: "Profitfaktor", execs: "Ausführungen",
+                curve: "Kapitalkurve", dist: "PnL Verteilung", ledger: "Hauptbuch",
+                th_time: "Zeitstempel", th_inst: "Instrument", th_dir: "Richtung", th_size: "Größe (Lots)", th_pnl: "Netto P&L", no_rec: "Keine Ausführungen",
+                calendar: "Trading Kalender", master_calendar: "Hauptkalender", max_daily_loss: "Tagesverlustlimit",
+                borders: "Ränder:", charts: "Diagramme:"
+            }
+        };
+
+        // --- CORE DATA & INJECTION ---
+        let users = JSON.parse(localStorage.getItem('intini_pro_v8')) || {};
+        
+        let dummyTrades = [];
+        let now = new Date();
+        let y = now.getFullYear();
+        let m = String(now.getMonth() + 1).padStart(2, '0');
+        let daysInMonth = new Date(y, now.getMonth() + 1, 0).getDate();
+        
+        for(let i=1; i<=30; i++) {
+            let pastDate = new Date();
+            pastDate.setDate(now.getDate() - (i * 2)); 
+            let dy = pastDate.getFullYear();
+            let dm = String(pastDate.getMonth() + 1).padStart(2, '0');
+            let dd = String(pastDate.getDate()).padStart(2, '0');
+            
+            let isWin = (i % 3 !== 0); 
+            let pnl = isWin ? (Math.random() * 600 + 100) : -(Math.random() * 300 + 100);
+            let rr = isWin ? (1.5 + Math.random()*2).toFixed(1) : 0;
+            
+            let sessions = ['LDN', 'NY', 'ASIA'];
+            let assets = ['EURUSD', 'BTCUSD', 'NAS100', 'XAUUSD'];
+            
+            dummyTrades.push({
+                id: Date.now() - (i * 100000),
+                date: `${dy}-${dm}-${dd}`,
+                time: `${String(8 + (i%10)).padStart(2,'0')}:30`,
+                asset: assets[i % assets.length],
+                session: sessions[i % sessions.length],
+                type: 'INTRA',
+                direction: isWin ? 'LONG' : 'SHORT',
+                lots: (Math.random()*5+1).toFixed(2),
+                risk: 1.0,
+                rr: rr,
+                grade: 'A',
+                outcome: isWin ? 'TP' : 'SL',
+                pnl: parseFloat(pnl.toFixed(2)),
+                notes: 'Advanced stat generated trade.',
+                image: null
+            });
+        }
+        dummyTrades.sort((a,b) => new Date(a.date) - new Date(b.date)); 
+
+        users['example_01'] = { 
+            pass: 'Monni27*', email: 'demo@intini.com', recovery: 'KEY-DEMO', 
+            capital: 100000, currency: '$', lang: 'en', maxLossPct: 2.0, 
+            themeBorder: 'border-white', themeChart: 'chart-white', isLightMode: false, trades: dummyTrades 
+        };
+        localStorage.setItem('intini_pro_v8', JSON.stringify(users));
+
+        let currentUser = null;
+        let currentLang = 'en';
+        let currentCurrency = '$';
+        let activeTrades = [];
+        let currentCalendarDate = new Date();
+        let currentImageBase64 = null; 
+        
+        // --- NAVIGATION LOGIC ---
+        function switchView(viewId) {
+            ['view-dashboard', 'view-stats', 'view-calendar', 'view-calculator', 'view-news', 'view-cot', 'view-settings'].forEach(id => {
+                let el = document.getElementById(id);
+                el.classList.add('hidden');
+                el.classList.remove('flex', 'grid');
+            });
+            
+            let target = document.getElementById('view-' + viewId);
+            target.classList.remove('hidden');
+            if (viewId === 'dashboard') target.classList.add('grid');
+            else target.classList.add('flex');
+
+            document.querySelectorAll('#nav-links a').forEach(a => {
+                a.classList.remove('bg-dynamic-hover', 'border-dynamic', 'shadow-[0_0_10px_var(--dyn-glow)]', 'text-dynamic');
+                a.classList.add('border-transparent', 'text-dynamic-muted');
+            });
+            let activeNav = document.getElementById('nav-' + viewId);
+            if(activeNav) {
+                activeNav.classList.remove('border-transparent', 'text-dynamic-muted');
+                activeNav.classList.add('bg-dynamic-hover', 'border-dynamic', 'shadow-[0_0_10px_var(--dyn-glow)]', 'text-dynamic');
+            }
+
+            if(currentUser) {
+                if(viewId === 'dashboard') setTimeout(() => { drawBasicCharts(users[currentUser].capital); }, 50);
+                if(viewId === 'stats') setTimeout(() => { drawAdvancedCharts(users[currentUser].capital); }, 50);
+                if(viewId === 'calculator') setTimeout(() => { if(!simChart) runSimulation(); }, 50);
+            }
+        }
+
+        // --- AUTH & THEMES ---
+        function toggleScreen(id) {
+            ['login-screen', 'setup-screen', 'recovery-screen'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            
+            if(id !== 'setup-screen') {
+                document.getElementById('setup-form-view').classList.remove('hidden');
+                document.getElementById('setup-success-view').classList.add('hidden');
+            }
+        }
+
+        function setBorderTheme(theme) {
+            document.body.classList.remove('border-white', 'border-red', 'border-blue', 'border-fuchsia', 'border-yellow', 'border-green');
+            document.body.classList.add(theme);
+            if(currentUser && users[currentUser]) {
+                users[currentUser].themeBorder = theme;
+                save();
+            }
+        }
+
+        function setChartTheme(theme) {
+            document.body.classList.remove('chart-white', 'chart-red', 'chart-blue', 'chart-fuchsia', 'chart-yellow', 'chart-green');
+            document.body.classList.add(theme);
+            if(currentUser && users[currentUser]) {
+                users[currentUser].themeChart = theme;
+                save();
+            }
+            if(currentUser) {
+                if(!document.getElementById('view-dashboard').classList.contains('hidden')) drawBasicCharts(users[currentUser].capital);
+                if(!document.getElementById('view-stats').classList.contains('hidden')) drawAdvancedCharts(users[currentUser].capital);
+                if(!document.getElementById('view-calculator').classList.contains('hidden')) runSimulation();
+            }
+        }
+
+        function toggleLightMode() {
+            let isLight = document.getElementById('theme-toggle').checked;
+            if(isLight) document.body.classList.add('light-mode');
+            else document.body.classList.remove('light-mode');
+            
+            if(currentUser && users[currentUser]) {
+                users[currentUser].isLightMode = isLight;
+                save();
+            }
+            if(currentUser) {
+                setTimeout(()=>{
+                    if(!document.getElementById('view-dashboard').classList.contains('hidden')) drawBasicCharts(users[currentUser].capital);
+                    if(!document.getElementById('view-stats').classList.contains('hidden')) drawAdvancedCharts(users[currentUser].capital);
+                    if(!document.getElementById('view-calculator').classList.contains('hidden')) runSimulation();
+                }, 100);
+            }
+        }
+
+        function generateRecoveryKey() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
+            let key = 'KEY-';
+            for (let i = 0; i < 4; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+            key += '-';
+            for (let i = 0; i < 4; i++) key += chars.charAt(Math.floor(Math.random() * chars.length));
+            return key;
+        }
+
+        function finalizeSetup() {
+            const u = document.getElementById('setup-user').value.trim();
+            const p = document.getElementById('setup-pass').value;
+            const email = document.getElementById('setup-email').value.trim();
+            const cap = parseFloat(document.getElementById('setup-capital').value) || 100000;
+            const cur = document.getElementById('setup-currency').value;
+            const lang = document.getElementById('setup-lang').value;
+
+            const passRegex = /^(?=.*[A-Z])(?=.*[\W_]).{8,}$/;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if(u.length < 2) return alert("Error: User ID too short");
+            if(!emailRegex.test(email)) return alert("Error: Invalid Email Address");
+            if(!passRegex.test(p)) return alert("Error: Password must be min 8 chars, contain 1 Uppercase and 1 Special Character.");
+            if(users[u]) return alert("Error: Operator ID Exists");
+
+            const genKey = generateRecoveryKey();
+
+            users[u] = { 
+                pass: p, email: email, recovery: genKey, capital: cap, currency: cur, 
+                lang: lang, maxLossPct: 2.0, themeBorder: 'border-white', themeChart: 'chart-white', isLightMode: false, trades: [] 
+            };
+            localStorage.setItem('intini_pro_v8', JSON.stringify(users));
+
+            document.getElementById('setup-form-view').classList.add('hidden');
+            document.getElementById('setup-success-view').classList.remove('hidden');
+            document.getElementById('display-gen-key').innerText = genKey;
+        }
+
+        function attemptLogin() {
+            const u = document.getElementById('login-user').value.trim();
+            const p = document.getElementById('login-pass').value;
+            
+            if(users[u] && users[u].pass === p) {
+                currentUser = u;
+                currentLang = users[u].lang || 'en';
+                currentCurrency = users[u].currency || '$';
+                activeTrades = users[u].trades || [];
+                currentCalendarDate = new Date(); 
+                if(!users[u].maxLossPct) users[u].maxLossPct = 2.0;
+
+                enterApp();
+            } else {
+                const err = document.getElementById('login-error');
+                err.classList.remove('hidden');
+                setTimeout(() => err.classList.add('hidden'), 2000);
+            }
+        }
+
+        function attemptRecovery() {
+            const u = document.getElementById('rec-user').value.trim();
+            const email = document.getElementById('rec-email').value.trim();
+            const k = document.getElementById('rec-key').value.trim();
+            const newP = document.getElementById('rec-new-pass').value;
+            const passRegex = /^(?=.*[A-Z])(?=.*[\W_]).{8,}$/;
+
+            if(users[u] && users[u].email === email && users[u].recovery === k) {
+                if(!passRegex.test(newP)) return alert("Error: New Password must be min 8 chars, contain 1 Uppercase and 1 Special Character.");
+                users[u].pass = newP;
+                localStorage.setItem('intini_pro_v8', JSON.stringify(users));
+                alert("Password Reset Successful. Please Login.");
+                toggleScreen('login-screen');
+            } else {
+                alert("Invalid Credentials (User, Email or Key mismatch).");
+            }
+        }
+
+        function applyLanguage(lang) {
+            const t = translations[lang];
+            if(!t) return;
+            document.querySelectorAll('[data-i18n]').forEach(el => { if(t[el.dataset.i18n]) el.innerText = t[el.dataset.i18n]; });
+            document.querySelectorAll('[data-i18n-ph]').forEach(el => { if(t[el.dataset.i18nPh]) el.placeholder = t[el.dataset.i18nPh]; });
+        }
+
+        function changeLanguageSetting() {
+            currentLang = document.getElementById('set-lang').value;
+            users[currentUser].lang = currentLang;
+            save();
+            applyLanguage(currentLang);
+        }
+
+        function changeCurrencySetting() {
+            currentCurrency = document.getElementById('set-currency').value;
+            users[currentUser].currency = currentCurrency;
+            save();
+            updateUI(); 
+        }
+
+        function wipeData() {
+            if(confirm("Are you sure you want to permanently delete ALL trades?")) {
+                activeTrades = [];
+                save();
+                updateUI();
+                alert("Data cleared.");
+            }
+        }
+
+        function enterApp() {
+            document.getElementById('auth-container').classList.add('hidden');
+            let appContent = document.getElementById('app-content');
+            appContent.classList.remove('hidden');
+            appContent.classList.add('flex');
+            setTimeout(() => appContent.classList.remove('opacity-0'), 100);
+
+            document.getElementById('nav-user').innerText = `${currentUser}`;
+            
+            document.getElementById('set-user').value = currentUser;
+            document.getElementById('set-email').value = users[currentUser].email;
+            document.getElementById('set-lang').value = currentLang;
+            document.getElementById('set-currency').value = currentCurrency;
+            document.getElementById('max-daily-loss').value = users[currentUser].maxLossPct;
+            
+            if(users[currentUser].themeBorder) setBorderTheme(users[currentUser].themeBorder);
+            else setBorderTheme('border-white');
+            
+            if(users[currentUser].themeChart) setChartTheme(users[currentUser].themeChart);
+            else setChartTheme('chart-white');
+
+            let isLight = users[currentUser].isLightMode || false;
+            document.getElementById('theme-toggle').checked = isLight;
+            if(isLight) document.body.classList.add('light-mode');
+
+            applyLanguage(currentLang);
+
+            const now = new Date();
+            document.getElementById('t-date').valueAsDate = now;
+            document.getElementById('t-time').value = now.toTimeString().slice(0,5);
+            
+            switchView('dashboard');
+            updateUI();
+        }
+
+        function logout() { location.reload(); }
+
+        // --- IMAGE HANDLING LOGIC ---
+        function previewImage(event) {
+            const file = event.target.files[0];
+            const displayLabel = document.getElementById('file-name-display');
+            const previewContainer = document.getElementById('image-preview-container');
+            const previewImg = document.getElementById('image-preview');
+
+            if (!file) {
+                currentImageBase64 = null;
+                displayLabel.innerText = translations[currentLang]?.attach_img || "Attach Image";
+                previewContainer.classList.add('hidden');
+                return;
+            }
+
+            displayLabel.innerText = file.name.length > 15 ? file.name.substring(0, 15) + '...' : file.name;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 1000;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) { if (width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; } } 
+                    else { if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; } }
+
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    currentImageBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    previewImg.src = currentImageBase64;
+                    previewContainer.classList.remove('hidden');
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function viewImage(id) {
+            const trade = activeTrades.find(t => t.id == id);
+            if (trade && trade.image) {
+                document.getElementById('modal-image-display').src = trade.image;
+                document.getElementById('image-modal').classList.remove('hidden');
+                document.getElementById('image-modal').classList.add('flex');
+            }
+        }
+
+        function closeImageModal() {
+            document.getElementById('image-modal').classList.add('hidden');
+            document.getElementById('image-modal').classList.remove('flex');
+            document.getElementById('modal-image-display').src = '';
+        }
+
+        // --- TRADING ENGINE ---
+        function calcAutoPnL() {
+            const riskPct = parseFloat(document.getElementById('t-risk').value);
+            const rr = parseFloat(document.getElementById('t-rr').value);
+            const outcome = document.getElementById('t-outcome').value;
+            
+            if(!riskPct || !outcome) return;
+
+            const currentEquity = getCurrentEquity();
+            const riskAmount = currentEquity * (riskPct / 100);
+            
+            let res = 0;
+            if(outcome === 'TP') res = riskAmount * rr;
+            else if(outcome === 'SL') res = -riskAmount;
+            
+            document.getElementById('t-pnl').value = res.toFixed(2);
+        }
+
+        function getCurrentEquity() {
+            if(!currentUser) return 0;
+            return users[currentUser].capital + activeTrades.reduce((a,b)=>a+b.pnl, 0);
+        }
+
+        function handleTrade(e) {
+            e.preventDefault();
+            const dir = document.querySelector('input[name="dir"]:checked').value;
+            
+            const trade = {
+                id: Date.now(),
+                date: document.getElementById('t-date').value,
+                time: document.getElementById('t-time').value,
+                asset: document.getElementById('t-asset').value.toUpperCase(),
+                session: document.getElementById('t-session').value,
+                type: document.getElementById('t-type').value, 
+                direction: dir,
+                lots: document.getElementById('t-lots').value || 0,
+                risk: document.getElementById('t-risk').value || 0,
+                rr: document.getElementById('t-rr').value || 0,
+                grade: document.getElementById('t-grade').value,
+                outcome: document.getElementById('t-outcome').value,
+                pnl: parseFloat(document.getElementById('t-pnl').value) || 0,
+                notes: document.getElementById('t-notes').value,
+                image: currentImageBase64 
+            };
+
+            activeTrades.push(trade);
+            activeTrades.sort((a,b) => new Date(a.date) - new Date(b.date));
+            save();
+            
+            e.target.reset();
+            document.getElementById('t-date').valueAsDate = new Date();
+            document.getElementById('dir-long').checked = true;
+            document.getElementById('t-image').value = '';
+            currentImageBase64 = null;
+            document.getElementById('file-name-display').innerText = translations[currentLang]?.attach_img || "Attach Image";
+            document.getElementById('image-preview-container').classList.add('hidden');
+            
+            updateUI();
+        }
+
+        function deleteTrade(id) {
+            if(confirm("Confirm deletion of ledger record?")) {
+                activeTrades = activeTrades.filter(t => t.id !== id);
+                save();
+                updateUI();
+            }
+        }
+
+        function save() {
+            if(currentUser && users[currentUser]) {
+                users[currentUser].trades = activeTrades;
+                try {
+                    localStorage.setItem('intini_pro_v8', JSON.stringify(users));
+                } catch (error) {
+                    alert("Storage limit exceeded! Consider deleting older trades with images to free up space.");
+                }
+            }
+        }
+
+        // --- RISK MANAGEMENT ---
+        function saveRiskLimit() {
+            if(!currentUser) return;
+            let val = parseFloat(document.getElementById('max-daily-loss').value);
+            if(isNaN(val) || val <= 0) val = 2.0;
+            users[currentUser].maxLossPct = val;
+            save();
+            updateDailyRisk();
+        }
+
+        function updateDailyRisk() {
+            if (!currentUser) return;
+            
+            const maxPct = users[currentUser].maxLossPct || 2.0;
+            const todayStr = new Date().toISOString().slice(0,10);
+            let todayPnl = 0;
+            
+            activeTrades.forEach(t => { if(t.date === todayStr) todayPnl += parseFloat(t.pnl); });
+
+            const currentEquity = getCurrentEquity(); 
+            const maxLossAmount = (currentEquity * (maxPct / 100));
+            
+            const bar = document.getElementById('daily-loss-bar');
+            const text = document.getElementById('daily-loss-text');
+            const warn = document.getElementById('daily-loss-warn');
+
+            if (todayPnl < 0) {
+                let currentLoss = Math.abs(todayPnl);
+                let fillPct = Math.min((currentLoss / maxLossAmount) * 100, 100);
+                
+                bar.style.width = fillPct + '%';
+                text.innerText = `${currentLoss.toFixed(2)} / ${maxLossAmount.toFixed(2)} ${currentCurrency}`;
+                
+                if (fillPct >= 100) { warn.classList.remove('hidden'); bar.classList.add('bg-[#ef4444]'); } 
+                else { warn.classList.add('hidden'); }
+            } else {
+                bar.style.width = '0%';
+                text.innerText = `0.00 / ${maxLossAmount.toFixed(2)} ${currentCurrency}`;
+                warn.classList.add('hidden');
+            }
+        }
+
+        // --- CALENDAR LOGIC ---
+        function changeMonth(dir) {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + dir);
+            renderCalendars(); 
+        }
+
+        function renderCalendars() {
+            const grid = document.getElementById('calendar-grid');
+            const modalGrid = document.getElementById('modal-calendar-grid');
+            const monthYearLabel = document.getElementById('calendar-month-year');
+            const modalMonthYearLabel = document.getElementById('modal-month-year');
+            
+            if(!grid || !modalGrid) return;
+
+            grid.innerHTML = '';
+            modalGrid.innerHTML = '';
+            
+            const year = currentCalendarDate.getFullYear();
+            const month = currentCalendarDate.getMonth();
+            
+            const monthNames = ["JANUARY", "FEBRUARY", "MARCH", "APRIL", "MAY", "JUNE", "JULY", "AUGUST", "SEPTEMBER", "OCTOBER", "NOVEMBER", "DECEMBER"];
+            const titleText = `${monthNames[month]} ${year}`;
+            monthYearLabel.innerText = titleText;
+            modalMonthYearLabel.innerText = titleText;
+
+            const dailyStats = {};
+            activeTrades.forEach(t => {
+                if(!dailyStats[t.date]) dailyStats[t.date] = { pnl: 0, trades: 0, wins: 0 };
+                dailyStats[t.date].pnl += parseFloat(t.pnl);
+                dailyStats[t.date].trades += 1;
+                if(t.pnl > 0) dailyStats[t.date].wins += 1;
+            });
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for(let i=0; i<firstDay; i++) {
+                grid.innerHTML += `<div class="border border-transparent rounded-[4px] aspect-square"></div>`;
+                modalGrid.innerHTML += `<div class="bg-[var(--chart-grid)] border border-dynamic rounded-xl opacity-20"></div>`;
+            }
+
+            for(let day=1; day<=daysInMonth; day++) {
+                const dateStr = `${year}-${String(month+1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const stats = dailyStats[dateStr];
+                const pnl = stats ? stats.pnl : undefined;
+                
+                let miniClass = "bg-[var(--input-bg)] border border-dynamic rounded-[4px] p-1 md:p-1.5 flex flex-col justify-between transition-all duration-300 w-full aspect-square group";
+                let modalClass = "bg-[var(--panel-bg)] border border-dynamic rounded-xl p-3 flex flex-col transition-all duration-300 relative group hover:-translate-y-1 hover:shadow-[0_0_15px_var(--dyn-glow)] cursor-default";
+                
+                let miniPnlHTML = "";
+                let modalPnlHTML = "";
+                let modalStatsHTML = "";
+                let dayTextClass = "text-dynamic-muted";
+
+                if (pnl !== undefined) {
+                    const wr = Math.round((stats.wins / stats.trades) * 100);
+                    
+                    if (pnl > 0) {
+                        miniClass += " cal-day-pos"; modalClass += " cal-day-pos";
+                        miniPnlHTML = `<span class="text-[9px] md:text-[10px] text-up font-bold text-right w-full block truncate">+${pnl.toFixed(0)}</span>`;
+                        modalPnlHTML = `<span class="text-xl md:text-3xl text-up font-bold">+${pnl.toFixed(2)}</span>`;
+                        dayTextClass = "text-dynamic font-bold";
+                    } else if (pnl < 0) {
+                        miniClass += " cal-day-neg"; modalClass += " cal-day-neg";
+                        miniPnlHTML = `<span class="text-[9px] md:text-[10px] text-down font-bold text-right w-full block truncate">${pnl.toFixed(0)}</span>`;
+                        modalPnlHTML = `<span class="text-xl md:text-3xl text-down font-bold">${pnl.toFixed(2)}</span>`;
+                        dayTextClass = "text-dynamic font-bold";
+                    } else {
+                        miniPnlHTML = `<span class="text-[9px] md:text-[10px] text-dynamic-muted font-bold text-right w-full block truncate">0.0</span>`;
+                        modalPnlHTML = `<span class="text-xl md:text-3xl text-dynamic-muted font-bold">0.00</span>`;
+                    }
+                    
+                    modalStatsHTML = `
+                        <div class="mt-auto pt-3 border-t border-dynamic flex justify-between items-center text-[10px] md:text-xs text-dynamic-muted font-mono w-full">
+                            <span class="bg-[var(--input-bg)] px-2 py-1 rounded border border-dynamic"><i class="fa-solid fa-hashtag text-[9px] mr-1 opacity-50"></i>${stats.trades}</span>
+                            <span class="bg-[var(--input-bg)] px-2 py-1 rounded border border-dynamic">WR: <span class="font-bold ${wr >= 50 ? 'text-up' : (wr > 0 ? 'text-down' : '')}">${wr}%</span></span>
+                        </div>
+                    `;
+                }
+
+                const today = new Date();
+                if(day === today.getDate() && month === today.getMonth() && year === today.getFullYear()) {
+                    miniClass += " ring-2 ring-[var(--dyn-chart)]";
+                    modalClass += " ring-2 ring-[var(--dyn-chart)]";
+                }
+
+                grid.innerHTML += `
+                    <div class="${miniClass}">
+                        <span class="text-[9px] md:text-[10px] font-mono ${dayTextClass}">${day}</span>
+                        ${miniPnlHTML}
+                    </div>
+                `;
+                
+                modalGrid.innerHTML += `
+                    <div class="${modalClass}">
+                        <span class="absolute top-3 left-3 text-sm font-mono ${dayTextClass}">${day}</span>
+                        <div class="flex-grow flex items-center justify-center mt-6 mb-2">
+                            ${modalPnlHTML}
+                        </div>
+                        ${modalStatsHTML}
+                    </div>
+                `;
+            }
+        }
+
+        // --- RENDER UI PRINCIPALE ---
+        function updateUI() {
+            const tbody = document.getElementById('trade-body');
+            tbody.innerHTML = '';
+            document.getElementById('empty-state').classList.toggle('hidden', activeTrades.length > 0);
+
+            let totalPnL = 0, wins = 0, grossWin = 0, grossLoss = 0;
+            let sessions = {}, assets = {}, rrs = [];
+            
+            let longWins = 0, shortWins = 0, longTotal = 0, shortTotal = 0;
+            let dayPnL = [0,0,0,0,0,0,0];
+
+            [...activeTrades].reverse().forEach(t => {
+                totalPnL += t.pnl;
+                if(t.pnl > 0) { wins++; grossWin += t.pnl; rrs.push(parseFloat(t.rr)); }
+                else if(t.pnl < 0) { grossLoss += Math.abs(t.pnl); }
+
+                sessions[t.session] = (sessions[t.session]||0)+1;
+                assets[t.asset] = (assets[t.asset]||0)+1;
+
+                if(t.direction === 'LONG') { longTotal++; if(t.pnl > 0) longWins++; }
+                else { shortTotal++; if(t.pnl > 0) shortWins++; }
+                
+                let d = new Date(t.date).getDay();
+                if(!isNaN(d)) dayPnL[d] += t.pnl;
+
+                const pnlClass = t.pnl > 0 ? 'text-up' : (t.pnl < 0 ? 'text-down' : 'text-dynamic-muted');
+                const dirClass = t.direction === 'LONG' ? 'text-up border-up' : 'text-down border-down';
+                
+                const imgBtnHTML = t.image ? `<button onclick="viewImage('${t.id}')" class="text-blue-400 hover:text-blue-200 transition ml-3" title="View Attachment"><i class="fa-solid fa-image"></i></button>` : '';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-dynamic-hover transition duration-200 group border-b border-dynamic">
+                        <td class="p-4 pl-6 font-mono">${t.date} <span class="text-[9px] opacity-50 ml-1">${t.time}</span></td>
+                        <td class="p-4 font-bold text-dynamic tracking-wider">
+                            ${t.asset} 
+                            <span class="text-[9px] text-dynamic-muted ml-2 border border-dynamic px-1 rounded">${t.type || 'N/A'}</span>
+                        </td>
+                        <td class="p-4"><span class="${dirClass} border px-2 py-0.5 text-[10px] rounded font-bold bg-dynamic-hover">${t.direction}</span></td>
+                        <td class="p-4 font-mono">${t.lots}</td>
+                        <td class="p-4">${t.rr}R</td>
+                        <td class="p-4 opacity-70">${t.risk}%</td>
+                        <td class="p-4 pr-6 ${pnlClass} font-bold text-right tracking-wider text-sm shadow-sm">${t.pnl > 0 ? '+' : ''}${t.pnl.toFixed(2)}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="deleteTrade(${t.id})" class="text-dynamic-muted hover:text-down transition active:scale-90"><i class="fa-solid fa-trash-can"></i></button>
+                            ${imgBtnHTML}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            const startCap = users[currentUser].capital;
+            const bal = startCap + totalPnL;
+
+            document.getElementById('kpi-balance').innerText = `${currentCurrency} ${bal.toLocaleString(undefined, {minimumFractionDigits:2})}`;
+            document.getElementById('kpi-wr').innerText = activeTrades.length ? ((wins/activeTrades.length)*100).toFixed(1) + '%' : '0.0%';
+            document.getElementById('kpi-pf').innerText = grossLoss ? (grossWin/grossLoss).toFixed(2) : (grossWin ? '∞' : '0.00');
+            document.getElementById('kpi-count').innerText = activeTrades.length;
+
+            document.getElementById('stat-gross-win').innerText = grossWin.toFixed(2);
+            document.getElementById('stat-gross-loss').innerText = grossLoss.toFixed(2);
+            let ev = activeTrades.length ? (totalPnL / activeTrades.length).toFixed(2) : '0.00';
+            document.getElementById('stat-ev').innerText = `${ev > 0 ? '+' : ''}${ev} ${currentCurrency}`;
+
+            const getTop = (o) => Object.entries(o).sort((a,b)=>b[1]-a[1])[0]?.[0] || '-';
+            document.getElementById('best-session').innerText = getTop(sessions);
+            document.getElementById('best-pair').innerText = getTop(assets);
+            document.getElementById('best-rr').innerText = rrs.length ? (rrs.reduce((a,b)=>a+b,0)/rrs.length).toFixed(2) + 'R' : '-';
+            
+            let longWR = longTotal ? (longWins/longTotal)*100 : 0;
+            let shortWR = shortTotal ? (shortWins/shortTotal)*100 : 0;
+            if (longTotal === 0 && shortTotal === 0) document.getElementById('best-dir').innerText = '-';
+            else document.getElementById('best-dir').innerText = longWR >= shortWR ? `LONG (${longWR.toFixed(0)}%)` : `SHORT (${shortWR.toFixed(0)}%)`;
+
+            let maxDayIdx = dayPnL.indexOf(Math.max(...dayPnL));
+            let daysNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            document.getElementById('best-day').innerText = dayPnL[maxDayIdx] > 0 ? daysNames[maxDayIdx].toUpperCase() : '-';
+
+            renderCalendars(); 
+            updateDailyRisk(); 
+
+            if(!document.getElementById('view-dashboard').classList.contains('hidden')) drawBasicCharts(startCap);
+            if(!document.getElementById('view-stats').classList.contains('hidden')) drawAdvancedCharts(startCap);
+        }
+
+        // --- CHART JS HELPER & GLOBALS ---
+        let eqChart, distChart, radarDashChart;
+        let rMultChart, mfeMaeChart, holdChart, effChart, underChart, gaugePFChart, gaugeSharpeChart;
+        let simChart;
+
+        function getThemeColors() {
+            let style = getComputedStyle(document.body);
+            let chartColor = style.getPropertyValue('--dyn-chart').trim() || '#10b981';
+            let chartColorAlpha = style.getPropertyValue('--dyn-chart-alpha').trim() || 'rgba(16,185,129,0.15)';
+            let isLight = document.body.classList.contains('light-mode');
+
+            return {
+                grid: style.getPropertyValue('--chart-grid').trim() || 'rgba(255,255,255,0.05)',
+                text: style.getPropertyValue('--chart-text').trim() || '#6b7280',
+                theme: chartColor,
+                themeTransparent: chartColorAlpha,
+                up: '#10b981', down: '#ef4444'
+            };
+        }
+
+        // --- DASHBOARD CHARTS ---
+        function drawBasicCharts(startCap) {
+            Chart.defaults.color = getThemeColors().text; 
+            Chart.defaults.font.family = 'JetBrains Mono';
+            Chart.defaults.font.size = 10;
+            let colors = getThemeColors();
+
+            const ctxE = document.getElementById('chartEquity');
+            if(ctxE) {
+                let runBal = startCap;
+                const dataE = [startCap, ...activeTrades.map(t => runBal += t.pnl)];
+                if(eqChart) eqChart.destroy();
+                eqChart = new Chart(ctxE.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: ['START', ...activeTrades.map((_,i)=>i+1)],
+                        datasets: [{
+                            data: dataE, borderColor: colors.theme, borderWidth: 2, tension: 0.3, pointRadius: 0, pointHoverRadius: 6, pointBackgroundColor: colors.theme, fill: true,
+                            backgroundColor: (ctx) => { const grad = ctx.chart.ctx.createLinearGradient(0,0,0,400); grad.addColorStop(0, colors.themeTransparent); grad.addColorStop(1, 'rgba(0, 0, 0, 0)'); return grad; }
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip: {mode: 'index', intersect: false} }, scales: { x: { display: false }, y: { position: 'right', grid: { color: colors.grid } } }, interaction: { mode: 'nearest', axis: 'x', intersect: false } }
+                });
+            }
+
+            const ctxD = document.getElementById('chartDistribution');
+            if(ctxD) {
+                const assetPnl = {};
+                activeTrades.forEach(t => assetPnl[t.asset] = (assetPnl[t.asset]||0) + t.pnl);
+                if(distChart) distChart.destroy();
+                distChart = new Chart(ctxD.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(assetPnl),
+                        datasets: [{ data: Object.values(assetPnl), backgroundColor: Object.values(assetPnl).map(v => v>=0 ? colors.theme : colors.down), borderRadius: 4, borderWidth: 0, barThickness: 'flex', maxBarThickness: 50 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} }, scales: { y: { position: 'right', grid: { color: colors.grid, drawBorder: false } }, x: { grid: { display: false } } } }
+                });
+            }
+
+            const ctxR = document.getElementById('chartRadarDash');
+            if(ctxR) drawRadarLogic(ctxR, colors);
+        }
+
+        function getSimulatedAdvStats(t) {
+            let rand = (Math.abs(t.id) % 100) / 100; 
+            let isWin = t.pnl > 0;
+            let rr = parseFloat(t.rr) || (isWin ? 2 : -1);
+            let mae = isWin ? (rand * -0.8) : -1 - (rand * 0.5); 
+            let mfe = isWin ? (rr * (0.8 + rand*0.4)) : (rand * 0.8); 
+            let duration = isWin ? (30 + rand * 120) : (10 + rand * 60); 
+            let entryEff = 50 + (rand * 45); 
+            let exitEff = isWin ? (70 + rand * 25) : (20 + rand * 30);
+            return { mae, mfe, duration, entryEff, exitEff };
+        }
+
+        // --- ADVANCED CHARTS (STATS PAGE) ---
+        function drawAdvancedCharts(startCap) {
+            Chart.defaults.color = getThemeColors().text; 
+            Chart.defaults.font.family = 'JetBrains Mono';
+            Chart.defaults.font.size = 10;
+            let colors = getThemeColors();
+
+            let rMultiples = {'-1R':0, '0R':0, '+1R':0, '+2R':0, '+3R+':0};
+            let scatterMfeMae = [];
+            let scatterHold = [];
+            let avgEntryEff = 0, avgExitEff = 0;
+            let dayHourHeatmap = {}; 
+
+            activeTrades.forEach(t => {
+                let isWin = t.pnl > 0;
+                let r = isWin ? (parseFloat(t.rr) || 1) : -1;
+                if(r <= -0.5) rMultiples['-1R']++;
+                else if(r < 0.5) rMultiples['0R']++;
+                else if(r < 1.5) rMultiples['+1R']++;
+                else if(r < 2.5) rMultiples['+2R']++;
+                else rMultiples['+3R+']++;
+
+                let adv = getSimulatedAdvStats(t);
+                
+                scatterMfeMae.push({ x: adv.mae, y: adv.mfe, isWin: isWin });
+                scatterHold.push({ x: adv.duration, y: t.pnl, r: isWin? 6:4, isWin: isWin });
+                avgEntryEff += adv.entryEff; avgExitEff += adv.exitEff;
+
+                let dateObj = new Date(t.date + 'T' + t.time);
+                let day = dateObj.getDay(); 
+                let hour = dateObj.getHours(); 
+                let slot = (hour >= 6 && hour < 12) ? 1 : (hour >= 12 && hour < 18) ? 2 : 3;
+                if(!dayHourHeatmap[day]) dayHourHeatmap[day] = {1:0, 2:0, 3:0};
+                dayHourHeatmap[day][slot] += t.pnl;
+            });
+
+            if(activeTrades.length) { avgEntryEff /= activeTrades.length; avgExitEff /= activeTrades.length; }
+
+            const ctxRMult = document.getElementById('chartRMultiples');
+            if(ctxRMult) {
+                if(rMultChart) rMultChart.destroy();
+                rMultChart = new Chart(ctxRMult.getContext('2d'), {
+                    type: 'bar',
+                    data: { labels: Object.keys(rMultiples), datasets: [{ data: Object.values(rMultiples), backgroundColor: [colors.down, colors.text, colors.up, colors.up, colors.theme], borderRadius: 4 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false} }, scales: { y: { grid: { color: colors.grid } }, x: { grid: {display:false} } } }
+                });
+            }
+
+            const ctxMfe = document.getElementById('chartMfeMae');
+            if(ctxMfe) {
+                if(mfeMaeChart) mfeMaeChart.destroy();
+                mfeMaeChart = new Chart(ctxMfe.getContext('2d'), {
+                    type: 'scatter',
+                    data: { datasets: [ { label: 'Winners', data: scatterMfeMae.filter(d=>d.isWin), backgroundColor: colors.up, pointRadius: 5 }, { label: 'Losers', data: scatterMfeMae.filter(d=>!d.isWin), backgroundColor: colors.down, pointRadius: 5 } ] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { title:{display:true, text:'MAE (Risk R)', color:colors.text}, grid: {color:colors.grid} }, y: { title:{display:true, text:'MFE (Reward R)', color:colors.text}, grid: {color:colors.grid} } } }
+                });
+            }
+
+            const ctxHold = document.getElementById('chartHoldingTime');
+            if(ctxHold) {
+                if(holdChart) holdChart.destroy();
+                holdChart = new Chart(ctxHold.getContext('2d'), {
+                    type: 'bubble',
+                    data: { datasets: [ { label: 'Winners', data: scatterHold.filter(d=>d.isWin), backgroundColor: colors.themeTransparent, borderColor: colors.theme, borderWidth:1 }, { label: 'Losers', data: scatterHold.filter(d=>!d.isWin), backgroundColor: colors.down+'33', borderColor: colors.down, borderWidth:1 } ] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { x: { title:{display:true, text:'Duration (Mins)'}, grid: {color:colors.grid} }, y: { title:{display:true, text:'Net PnL'}, grid: {color:colors.grid} } } }
+                });
+            }
+
+            const hmCont = document.getElementById('heatmap-container');
+            if(hmCont) {
+                hmCont.innerHTML = '';
+                let daysArr = ['Mon','Tue','Wed','Thu','Fri'];
+                daysArr.forEach((dName, idx) => {
+                    let dInt = idx + 1; 
+                    hmCont.innerHTML += `<div class="flex items-center justify-end pr-2 font-bold">${dName}</div>`;
+                    for(let s=1; s<=3; s++) {
+                        let pnl = (dayHourHeatmap[dInt] && dayHourHeatmap[dInt][s]) ? dayHourHeatmap[dInt][s] : 0;
+                        let bg = 'bg-[var(--chart-grid)]'; 
+                        if(pnl > 0) { if(pnl > 300) bg = 'bg-[#10b981] text-black font-bold'; else if (pnl > 100) bg = 'bg-[#10b981] bg-opacity-70 text-black'; else bg = 'bg-[#10b981] bg-opacity-40'; } 
+                        else if(pnl < 0) { if(pnl < -200) bg = 'bg-[#ef4444] text-white font-bold'; else bg = 'bg-[#ef4444] bg-opacity-50'; }
+                        let txt = pnl !== 0 ? pnl.toFixed(0) : '-';
+                        hmCont.innerHTML += `<div class="${bg} hm-cell flex items-center justify-center rounded cursor-help" title="${dName} Slot ${s}: ${txt}">${txt}</div>`;
+                    }
+                });
+            }
+
+            const ctxEff = document.getElementById('chartEfficiency');
+            if(ctxEff) {
+                if(effChart) effChart.destroy();
+                effChart = new Chart(ctxEff.getContext('2d'), {
+                    type: 'radar',
+                    data: { labels: ['Entry Eff.', 'Exit Eff.', 'Direction Acc.', 'Sizing Acc.'], datasets: [{ data: [avgEntryEff, avgExitEff, 65, 80], backgroundColor: colors.themeTransparent, borderColor: colors.theme, borderWidth: 2, pointBackgroundColor: '#fff' }] },
+                    options: { responsive: true, maintainAspectRatio: false, scales: { r: { angleLines: {color:colors.grid}, grid: {color:colors.grid}, pointLabels: {color:colors.text}, ticks: {display:false, min:0, max:100} } }, plugins: {legend:{display:false}} }
+                });
+            }
+
+            const ctxUnd = document.getElementById('chartUnderwater');
+            if(ctxUnd) {
+                let eqData = [startCap]; let ddData = [0]; let runBal = startCap; let peak = startCap;
+                activeTrades.forEach(t => { runBal += t.pnl; if(runBal > peak) peak = runBal; eqData.push(runBal); ddData.push(runBal - peak); });
+                if(underChart) underChart.destroy();
+                underChart = new Chart(ctxUnd.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: ['START', ...activeTrades.map((_,i)=>i+1)], datasets: [ { label: 'Equity', data: eqData, borderColor: colors.theme, borderWidth: 2, tension: 0.2, pointRadius: 0, yAxisID: 'y' }, { label: 'Drawdown', data: ddData, borderColor: colors.down, backgroundColor: colors.down+'40', borderWidth: 1, fill: true, tension: 0.2, pointRadius: 0, yAxisID: 'y1' } ] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:true, labels:{color:colors.text}} }, scales: { x: { display: false }, y: { position: 'right', grid: {color:colors.grid} }, y1: { position: 'left', max: 0, grid: {display:false} } } }
+                });
+            }
+
+            let wins = activeTrades.filter(t=>t.pnl>0).reduce((a,b)=>a+b.pnl,0);
+            let loss = activeTrades.filter(t=>t.pnl<0).reduce((a,b)=>a+Math.abs(b.pnl),0);
+            let pf = loss > 0 ? wins/loss : (wins>0 ? 9.99 : 0);
+            
+            const drawGauge = (ctxId, val, maxVal, textId) => {
+                let ctx = document.getElementById(ctxId);
+                if(!ctx) return null;
+                let pct = Math.min(val / maxVal, 1);
+                let col = pct > 0.6 ? colors.up : (pct > 0.3 ? '#eab308' : colors.down);
+                document.getElementById(textId).innerText = val.toFixed(2);
+                document.getElementById(textId).style.color = col;
+
+                return new Chart(ctx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: { datasets: [{ data: [pct, 1-pct], backgroundColor: [col, colors.grid], borderWidth: 0, circumference: 180, rotation: 270 }] },
+                    options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins:{legend:{display:false}, tooltip:{enabled:false}} }
+                });
+            };
+
+            if(gaugePFChart) gaugePFChart.destroy();
+            gaugePFChart = drawGauge('gaugePF', pf, 3.0, 'gaugePF-text');
+
+            let totalPnL = wins - loss;
+            let mean = activeTrades.length ? totalPnL / activeTrades.length : 0;
+            let variance = activeTrades.length ? activeTrades.reduce((a,b)=>a+Math.pow(b.pnl-mean, 2),0)/activeTrades.length : 0;
+            let stdDev = Math.sqrt(variance);
+            let sharpe = stdDev === 0 ? 0 : (mean / stdDev) * Math.sqrt(20); 
+            
+            if(gaugeSharpeChart) gaugeSharpeChart.destroy();
+            gaugeSharpeChart = drawGauge('gaugeSharpe', sharpe, 3.0, 'gaugeSharpe-text');
+        }
+
+        function drawRadarLogic(ctxR, colors) {
+            let wins = activeTrades.filter(t => t.pnl > 0).length;
+            let wrScore = activeTrades.length ? (wins/activeTrades.length)*100 : 0;
+            let rrs = activeTrades.filter(t => t.pnl > 0).map(t => parseFloat(t.rr));
+            let avgRr = rrs.length ? (rrs.reduce((a,b)=>a+b,0)/rrs.length) : 0;
+            let rrScore = Math.min(100, (avgRr / 5) * 100); 
+            let consScore = Math.min(100, (wins / (activeTrades.length||1))*100 + (activeTrades.length > 10 ? 20 : 0)); 
+            
+            let totalPnL = activeTrades.reduce((a,b)=>a+b.pnl, 0);
+            let mean = activeTrades.length ? totalPnL / activeTrades.length : 0;
+            let variance = activeTrades.length ? activeTrades.reduce((a,b)=>a+Math.pow(b.pnl-mean, 2),0)/activeTrades.length : 0;
+            let stdDev = Math.sqrt(variance);
+            let sharpeScore = Math.min(100, Math.max(0, (stdDev === 0 ? 0 : mean / stdDev) * 50)); 
+
+            if(radarDashChart) radarDashChart.destroy();
+            radarDashChart = new Chart(ctxR.getContext('2d'), {
+                type: 'radar',
+                data: { labels: ['Win Rate', 'Risk:Reward', 'Consistency', 'Sharpe Proxy'], datasets: [{ data: [wrScore, rrScore, consScore, sharpeScore], backgroundColor: colors.themeTransparent, borderColor: colors.theme, borderWidth: 1.5, pointBackgroundColor: '#fff', pointRadius: 2 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { r: { angleLines: { color: colors.grid }, grid: { color: colors.grid }, pointLabels: { color: colors.text, font: { family: 'JetBrains Mono', size: 9, weight: 'bold' } }, ticks: { display: false, min: 0, max: 100 } } }, plugins: { legend: { display: false } } }
+            });
+        }
+
+        // --- EQUITY CALCULATOR ---
+        function runSimulation() {
+            const startEq = parseFloat(document.getElementById('sim-eq').value);
+            const winProb = parseFloat(document.getElementById('sim-win').value) / 100;
+            const rr = parseFloat(document.getElementById('sim-rr').value);
+            const trades = parseInt(document.getElementById('sim-trades').value);
+            const lines = parseInt(document.getElementById('sim-lines').value);
+            const risk = parseFloat(document.getElementById('sim-risk').value) / 100;
+
+            if(!startEq || !winProb || !rr || !trades || !lines || !risk) return alert("Fill all calculator fields");
+
+            let datasets = [];
+            let labels = Array.from({length: trades + 1}, (_, i) => i);
+            let endEquities = [];
+            let colors = getThemeColors();
+
+            for(let l=0; l<lines; l++) {
+                let eqData = [startEq];
+                let currentEq = startEq;
+                for(let t=0; t<trades; t++) {
+                    let riskAmount = currentEq * risk;
+                    if(Math.random() <= winProb) {
+                        currentEq += riskAmount * rr;
+                    } else {
+                        currentEq -= riskAmount;
+                    }
+                    eqData.push(currentEq);
+                }
+                endEquities.push(currentEq);
+                datasets.push({
+                    data: eqData,
+                    borderColor: colors.theme + '66', // 40% opacity
+                    borderWidth: 1,
+                    pointRadius: 0,
+                    tension: 0.1
+                });
+            }
+
+            const ctx = document.getElementById('chartSimulator').getContext('2d');
+            if(simChart) simChart.destroy();
+            simChart = new Chart(ctx, {
+                type: 'line',
+                data: { labels: labels, datasets: datasets },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: {display:false}, tooltip:{enabled:false} }, scales: { x: { grid: {color: colors.grid} }, y: { position: 'right', grid: {color: colors.grid} } } }
+            });
+
+            let maxEq = Math.max(...endEquities);
+            let minEq = Math.min(...endEquities);
+            let avgEq = endEquities.reduce((a,b)=>a+b,0) / lines;
+            let ruined = endEquities.filter(e => e < startEq * 0.1).length; 
+
+            document.getElementById('sim-max').innerText = maxEq.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+            document.getElementById('sim-min').innerText = minEq.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+            document.getElementById('sim-avg').innerText = avgEq.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+            document.getElementById('sim-ruin').innerText = ((ruined/lines)*100).toFixed(1) + '%';
+        }
+
+        function exportCSV() {
+            let csv = "Date,Time,Asset,Type,Dir,Lots,Risk%,RR,PnL,Grade,Note\n";
+            activeTrades.forEach(t => csv += `${t.date},${t.time},${t.asset},${t.type},${t.direction},${t.lots},${t.risk},${t.rr},${t.pnl},${t.grade},"${t.notes.replace(/"/g, '""')}"\n`);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv], {type: 'text/csv'}));
+            a.download = `Intini_Journaling_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+        }
+    </script>
+</body>
+</html>
